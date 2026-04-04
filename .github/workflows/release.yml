@@ -24,8 +24,6 @@ jobs:
         include:
           - os: macos-latest
             artifact: tka-macos-arm64
-          - os: macos-13
-            artifact: tka-macos-x64
           - os: ubuntu-latest
             artifact: tka-linux-x64
           - os: windows-latest
@@ -35,12 +33,21 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: dart-lang/setup-dart@e630b99d28a3b71860378cafdc2a067c71107f94 # v1.7.0
       - run: dart pub get
-      - name: Build
-        run: dart compile exe bin/tka.dart -o build/${{ matrix.artifact }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+      - name: Build (unix)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p build
+          dart compile exe bin/tka.dart -o build/${{ matrix.artifact }}
+      - name: Build (windows)
+        if: runner.os == 'Windows'
+        run: |
+          mkdir build -Force -ErrorAction SilentlyContinue
+          dart compile exe bin/tka.dart -o build/${{ matrix.artifact }}.exe
+        shell: pwsh
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ matrix.artifact }}
-          path: build/${{ matrix.artifact }}${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+          path: build/${{ matrix.artifact }}*
 
   release:
     needs: build

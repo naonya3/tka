@@ -2,6 +2,8 @@
 
 Ticket for Agents — a schema-driven ticket management CLI.
 
+AI agents need task management too. But they can't read Kanban boards or parse Markdown tables. tka gives them a structured, JSON-in/JSON-out interface to create, track, and transition tickets — so they stay on task without human babysitting.
+
 Every output is machine-readable JSON on stdout. Errors go to stderr as JSON. No human-friendly formatting — agents parse it directly and move on.
 
 But there's one exception: `tka watch` gives you a real-time terminal dashboard to see what your agents are up to. It's surprisingly fun to watch.
@@ -114,6 +116,25 @@ tka project add bugs --schema '{
 **Field types**: `string`, `number`, `date` (YYYY-MM-DD), `list` (append-only), `enum` (requires `values`)
 
 **States**: Keys in `transitions` are non-terminal. States that only appear as targets (like `done` above) are terminal — no further transitions allowed.
+
+## Directory Structure
+
+`tka init` creates a `.tka/` directory in your project root:
+
+```
+.tka/
+├── projects/          # Project definitions (YAML)
+│   ├── my-tasks.yaml
+│   └── archived/      # Archived projects
+└── data/              # Ticket data (JSON, one file per ticket)
+    ├── my-tasks/
+    │   ├── 001.json
+    │   ├── 002.json
+    │   └── archived/  # Archived tickets
+    └── ...
+```
+
+Everything is plain files — no database, no server. Check `.tka/` into version control if you want history, or `.gitignore` it if you don't.
 
 ## Build
 

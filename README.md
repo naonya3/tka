@@ -84,6 +84,30 @@ description" | tka create proj --set title="Task" --set detail=-
 tka update <id> --set detail=@docs/design.md
 ```
 
+## Why Schema-Driven?
+
+AI agents make mistakes — wrong field names, invalid values, impossible state transitions. tka catches all of these at the CLI boundary and returns actionable error messages:
+
+```
+"status" is not a field. Use --status <value> to filter by status.
+Cannot transition from 'todo' to 'done'. Available: in_progress
+priority: must be one of [p0, p1, p2]
+Unknown field: priorty
+```
+
+The schema enforces your workflow so agents don't need to memorize rules — they just try, read the error, and self-correct.
+
+**What the schema guarantees:**
+
+- **Required fields** — missing fields are rejected at creation time
+- **Type checking** — string, number, date (with calendar validation), list, enum
+- **Enum constraints** — only defined values accepted, with allowed values listed in errors
+- **State machine** — only valid transitions allowed, terminal states enforced
+- **Unknown fields** — typos and hallucinated fields rejected immediately
+- **List protection** — list fields are append-only, no accidental overwrites
+
+This means you can design any workflow — TDD cycles, bug triage, content pipelines — and trust that agents will follow it.
+
 ## Schema Definition
 
 Projects are defined by fields and a state machine. Use `tka project schema` to get the full spec, then pass JSON to `--schema`:

@@ -1,0 +1,8 @@
+# Dart
+.dart_tool/
+
+# Build
+build/
+
+# Runtime data
+.tka/

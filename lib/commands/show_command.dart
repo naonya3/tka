@@ -1,0 +1,73 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:args/command_runner.dart';
+import '../store/project_store.dart';
+import '../store/ticket_store.dart';
+
+class ShowCommand extends Command<void> {
+  @override
+  final String name = 'show';
+  @override
+  final String description = '''Show ticket details.
+
+Usage: tka show <id>  (e.g. tka show shopping-001)
+Output: compact JSON (one line). Includes available_transitions for current status.
+Use --pretty for indented output.''';
+
+  final ProjectStore? projectStore;
+  final TicketStore ticketStore;
+  final IOSink _out;
+
+  ShowCommand({
+    this.projectStore,
+    required this.ticketStore,
+    IOSink? out,
+  }) : _out = out ?? stdout {
+    argParser.addFlag('pretty', help: 'Pretty-print JSON output', defaultsTo: false);
+  }
+
+  @override
+  void run() {
+    final args = argResults!.rest;
+    if (args.isEmpty) {
+      usageException('Please provide a ticket id (e.g., game-dev-003)');
+    }
+
+    final rawId = args.first;
+    final parsed = _parseId(rawId);
+    if (parsed == null) {
+      usageException('Invalid ticket id format: $rawId');
+    }
+
+    final ticket = ticketStore.load(parsed.$1, parsed.$2);
+    final json = ticket.toJson();
+
+    if (projectStore != null) {
+      try {
+        final def = projectStore!.load(ticket.project);
+        json['available_transitions'] =
+            def.stateMachine.getAvailableTransitions(ticket.status);
+      } catch (_) {
+        json['available_transitions'] = <String>[];
+      }
+    }
+
+    final pretty = argResults!['pretty'] as bool;
+    if (pretty) {
+      _out.writeln(const JsonEncoder.withIndent('  ').convert(json));
+    } else {
+      _out.writeln(jsonEncode(json));
+    }
+  }
+
+  static (String, int)? _parseId(String id) {
+    final lastDash = id.lastIndexOf('-');
+    if (lastDash < 0) return null;
+    final seqStr = id.substring(lastDash + 1);
+    final seq = int.tryParse(seqStr);
+    if (seq == null) return null;
+    final project = id.substring(0, lastDash);
+    if (project.isEmpty) return null;
+    return (project, seq);
+  }
+}

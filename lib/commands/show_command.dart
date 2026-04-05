@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:args/command_runner.dart';
+import '../helpers/ticket_id.dart';
 import '../store/project_store.dart';
 import '../store/ticket_store.dart';
 
@@ -34,12 +35,9 @@ Use --pretty for indented output.''';
     }
 
     final rawId = args.first;
-    final parsed = _parseId(rawId);
-    if (parsed == null) {
-      usageException('Invalid ticket id format: $rawId');
-    }
+    final (project, seq) = parseTicketId(rawId);
 
-    final ticket = ticketStore.load(parsed.$1, parsed.$2);
+    final ticket = ticketStore.load(project, seq);
     final json = ticket.toJson();
 
     if (projectStore != null) {
@@ -62,14 +60,4 @@ Use --pretty for indented output.''';
     }
   }
 
-  static (String, int)? _parseId(String id) {
-    final lastDash = id.lastIndexOf('-');
-    if (lastDash < 0) return null;
-    final seqStr = id.substring(lastDash + 1);
-    final seq = int.tryParse(seqStr);
-    if (seq == null) return null;
-    final project = id.substring(0, lastDash);
-    if (project.isEmpty) return null;
-    return (project, seq);
-  }
 }

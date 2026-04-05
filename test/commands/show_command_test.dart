@@ -91,6 +91,13 @@ void main() {
       );
     });
 
+    test('throws on invalid id format', () async {
+      expect(
+        () => makeRunner().run(['show', 'nohyphen']),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
     test('throws on non-existing ticket', () async {
       expect(
         () => makeRunner().run(['show', 'proj-999']),

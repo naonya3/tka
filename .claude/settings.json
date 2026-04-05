@@ -1,4 +1,10 @@
 {
+  "permissions": {
+    "deny": [
+      "Edit(.tka/data/**)",
+      "Write(.tka/data/**)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {

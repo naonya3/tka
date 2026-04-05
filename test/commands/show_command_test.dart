@@ -36,13 +36,13 @@ void main() {
     tmpDir.deleteSync(recursive: true);
   });
 
-  CommandRunner<void> _makeRunner() {
+  CommandRunner<void> makeRunner() {
     final runner = CommandRunner<void>('ticket', 'test');
     runner.addCommand(ShowCommand(ticketStore: ticketStore, out: out));
     return runner;
   }
 
-  Map<String, dynamic> _parseOutput() {
+  Map<String, dynamic> parseOutput() {
     return jsonDecode(out.lines.join('')) as Map<String, dynamic>;
   }
 
@@ -51,8 +51,8 @@ void main() {
       ticketStore.save(_makeTicket('myproj', 3, 'in_progress',
           fields: {'title': 'Implement feature', 'detail': 'Some detail'}));
 
-      await _makeRunner().run(['show', 'myproj-003']);
-      final result = _parseOutput();
+      await makeRunner().run(['show', 'myproj-003']);
+      final result = parseOutput();
       expect(result['id'], equals('myproj-003'));
       expect(result['project'], equals('myproj'));
       expect(result['status'], equals('in_progress'));
@@ -66,8 +66,8 @@ void main() {
       ticketStore.save(_makeTicket('game-dev', 1, 'backlog',
           fields: {'title': 'Setup'}));
 
-      await _makeRunner().run(['show', 'game-dev-001']);
-      final result = _parseOutput();
+      await makeRunner().run(['show', 'game-dev-001']);
+      final result = parseOutput();
       expect(result['id'], equals('game-dev-001'));
       expect(result['project'], equals('game-dev'));
     });
@@ -78,21 +78,21 @@ void main() {
         'history': ['entry 1', 'entry 2'],
       }));
 
-      await _makeRunner().run(['show', 'proj-001']);
-      final result = _parseOutput();
+      await makeRunner().run(['show', 'proj-001']);
+      final result = parseOutput();
       expect(result['fields']['history'], equals(['entry 1', 'entry 2']));
     });
 
     test('throws on missing id argument', () async {
       expect(
-        () => _makeRunner().run(['show']),
+        () => makeRunner().run(['show']),
         throwsA(isA<UsageException>()),
       );
     });
 
     test('throws on non-existing ticket', () async {
       expect(
-        () => _makeRunner().run(['show', 'proj-999']),
+        () => makeRunner().run(['show', 'proj-999']),
         throwsException,
       );
     });

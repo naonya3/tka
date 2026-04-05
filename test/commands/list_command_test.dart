@@ -66,7 +66,7 @@ void main() {
     tmpDir.deleteSync(recursive: true);
   });
 
-  CommandRunner<void> _makeRunner() {
+  CommandRunner<void> makeRunner() {
     final runner = CommandRunner<void>('ticket', 'test');
     runner.addCommand(ListCommand(
       projectStore: projectStore,
@@ -76,15 +76,15 @@ void main() {
     return runner;
   }
 
-  List<dynamic> _parseOutput() {
+  List<dynamic> parseOutput() {
     return jsonDecode(out.lines.join('')) as List<dynamic>;
   }
 
   group('list command', () {
     test('outputs empty JSON array when no tickets', () async {
       _writeProjectYaml('${tmpDir.path}/projects', 'proj');
-      await _makeRunner().run(['list', '-p', 'proj']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj']);
+      final result = parseOutput();
       expect(result, isEmpty);
     });
 
@@ -93,8 +93,8 @@ void main() {
       ticketStore.save(_makeTicket('proj', 1, 'todo', title: 'T1'));
       ticketStore.save(_makeTicket('proj', 2, 'done', title: 'T2'));
 
-      await _makeRunner().run(['list', '-p', 'proj']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj']);
+      final result = parseOutput();
       expect(result.length, equals(2));
     });
 
@@ -104,8 +104,8 @@ void main() {
       ticketStore.save(_makeTicket('proj', 2, 'done', title: 'T2'));
       ticketStore.save(_makeTicket('proj', 3, 'todo', title: 'T3'));
 
-      await _makeRunner().run(['list', '-p', 'proj', '--status', 'todo']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj', '--status', 'todo']);
+      final result = parseOutput();
       expect(result.length, equals(2));
       expect(result.every((t) => t['status'] == 'todo'), isTrue);
     });
@@ -115,7 +115,7 @@ void main() {
       ticketStore.save(_makeTicket('proj', 1, 'todo'));
 
       expect(
-        () => _makeRunner().run(['list', '-p', 'proj', '--status', 'nonexistent']),
+        () => makeRunner().run(['list', '-p', 'proj', '--status', 'nonexistent']),
         throwsA(isA<Exception>()),
       );
     });
@@ -126,8 +126,8 @@ void main() {
         ticketStore.save(_makeTicket('proj', i, 'todo', title: 'T$i'));
       }
 
-      await _makeRunner().run(['list', '-p', 'proj', '--limit', '3']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj', '--limit', '3']);
+      final result = parseOutput();
       expect(result.length, equals(3));
     });
 
@@ -137,8 +137,8 @@ void main() {
       ticketStore.save(_makeTicket('proj', 2, 'todo', title: 'T2'));
       ticketStore.save(_makeTicket('proj', 3, 'todo', title: 'T3'));
 
-      await _makeRunner().run(['list', '-p', 'proj', '--offset', '2']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj', '--offset', '2']);
+      final result = parseOutput();
       expect(result.length, equals(1));
       expect(result[0]['id'], equals('proj-003'));
     });
@@ -149,8 +149,8 @@ void main() {
         ticketStore.save(_makeTicket('proj', i, 'todo', title: 'T$i'));
       }
 
-      await _makeRunner().run(['list', '-p', 'proj', '--offset', '3', '--limit', '2']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj', '--offset', '3', '--limit', '2']);
+      final result = parseOutput();
       expect(result.length, equals(2));
       expect(result[0]['id'], equals('proj-004'));
       expect(result[1]['id'], equals('proj-005'));
@@ -162,8 +162,8 @@ void main() {
       ticketStore.save(_makeTicket('proj', 1, 'todo', title: 'T1'));
       ticketStore.save(_makeTicket('proj', 2, 'todo', title: 'T2'));
 
-      await _makeRunner().run(['list', '-p', 'proj', '--sort', 'seq']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj', '--sort', 'seq']);
+      final result = parseOutput();
       expect(result[0]['id'], equals('proj-001'));
       expect(result[1]['id'], equals('proj-002'));
       expect(result[2]['id'], equals('proj-003'));
@@ -175,8 +175,8 @@ void main() {
       ticketStore.save(_makeTicket('proj', 2, 'todo', title: 'T2'));
       ticketStore.save(_makeTicket('proj', 3, 'todo', title: 'T3'));
 
-      await _makeRunner().run(['list', '-p', 'proj', '--sort', '-seq']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj', '--sort', '-seq']);
+      final result = parseOutput();
       expect(result[0]['id'], equals('proj-003'));
       expect(result[1]['id'], equals('proj-002'));
       expect(result[2]['id'], equals('proj-001'));
@@ -191,8 +191,8 @@ void main() {
       ticketStore.save(_makeTicket('proj', 3, 'todo',
           title: 'T3', createdAt: '2026-04-02T10:00:00+09:00'));
 
-      await _makeRunner().run(['list', '-p', 'proj', '--sort', 'created_at']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj', '--sort', 'created_at']);
+      final result = parseOutput();
       expect(result[0]['id'], equals('proj-002'));
       expect(result[1]['id'], equals('proj-003'));
       expect(result[2]['id'], equals('proj-001'));
@@ -204,8 +204,8 @@ void main() {
       ticketStore.save(_makeTicket('proj', 1, 'todo', title: 'T1'));
       ticketStore.save(_makeTicket('proj', 2, 'todo', title: 'T2'));
 
-      await _makeRunner().run(['list', '-p', 'proj', '--sort', '-seq', '--limit', '2']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj', '--sort', '-seq', '--limit', '2']);
+      final result = parseOutput();
       expect(result.length, equals(2));
       expect(result[0]['id'], equals('proj-003'));
       expect(result[1]['id'], equals('proj-002'));
@@ -221,8 +221,8 @@ void main() {
       ticketStore.save(_makeTicket('proj', 3, 'todo',
           title: 'T3', extraFields: {'priority': 'p0'}));
 
-      await _makeRunner().run(['list', '-p', 'proj', '--where', 'priority=p0']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj', '--where', 'priority=p0']);
+      final result = parseOutput();
       expect(result.length, equals(2));
       expect(result.every((t) => t['id'] != 'proj-002'), isTrue);
     });
@@ -240,9 +240,9 @@ void main() {
           title: 'T3',
           extraFields: {'priority': 'p1', 'assignee': 'agent-A'}));
 
-      await _makeRunner()
+      await makeRunner()
           .run(['list', '-p', 'proj', '-w', 'priority=p0', '-w', 'assignee=agent-A']);
-      final result = _parseOutput();
+      final result = parseOutput();
       expect(result.length, equals(1));
       expect(result[0]['id'], equals('proj-001'));
     });
@@ -257,9 +257,9 @@ void main() {
       ticketStore.save(_makeTicket('proj', 3, 'todo',
           title: 'T3', extraFields: {'priority': 'p1'}));
 
-      await _makeRunner()
+      await makeRunner()
           .run(['list', '-p', 'proj', '--status', 'todo', '--where', 'priority=p0']);
-      final result = _parseOutput();
+      final result = parseOutput();
       expect(result.length, equals(1));
       expect(result[0]['id'], equals('proj-001'));
     });
@@ -269,7 +269,7 @@ void main() {
       ticketStore.save(_makeTicket('proj', 1, 'todo'));
 
       expect(
-        () => _makeRunner().run(['list', '-p', 'proj', '--where', 'status=todo']),
+        () => makeRunner().run(['list', '-p', 'proj', '--where', 'status=todo']),
         throwsA(isA<Exception>().having(
             (e) => e.toString(), 'message', contains('Use --status'))),
       );
@@ -279,8 +279,8 @@ void main() {
       _writeProjectYaml('${tmpDir.path}/projects', 'proj');
       ticketStore.save(_makeTicket('proj', 1, 'todo', title: 'T1'));
 
-      await _makeRunner().run(['list', '-p', 'proj']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj']);
+      final result = parseOutput();
       expect(result[0].keys.toList(), equals(['id', 'status']));
       expect(result[0]['id'], equals('proj-001'));
       expect(result[0]['status'], equals('todo'));
@@ -292,8 +292,8 @@ void main() {
       ticketStore.save(_makeTicket('proj', 1, 'todo',
           title: 'T1', extraFields: {'priority': 'p0'}));
 
-      await _makeRunner().run(['list', '-p', 'proj', '--fields', 'id,priority']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj', '--fields', 'id,priority']);
+      final result = parseOutput();
       expect(result[0]['priority'], equals('p0'));
     });
 
@@ -302,7 +302,7 @@ void main() {
       ticketStore.save(_makeTicket('proj', 1, 'todo'));
 
       expect(
-        () => _makeRunner().run(['list', '-p', 'proj', '--fields', 'id,nonexistent']),
+        () => makeRunner().run(['list', '-p', 'proj', '--fields', 'id,nonexistent']),
         throwsA(isA<Exception>().having(
             (e) => e.toString(), 'message', contains('Unknown fields: nonexistent'))),
       );
@@ -312,7 +312,7 @@ void main() {
       _writeProjectYaml('${tmpDir.path}/projects', 'proj');
 
       expect(
-        () => _makeRunner().run(['list', '-p', 'proj', '--fields', '']),
+        () => makeRunner().run(['list', '-p', 'proj', '--fields', '']),
         throwsA(isA<Exception>().having(
             (e) => e.toString(), 'message', contains('at least one field'))),
       );
@@ -324,8 +324,8 @@ void main() {
       ticketStore.save(_makeTicket('proj', 2, 'todo', title: 'Active'));
       ticketStore.archive('proj', 1);
 
-      await _makeRunner().run(['list', '-p', 'proj', '--archived']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj', '--archived']);
+      final result = parseOutput();
       expect(result.length, equals(1));
       expect(result[0]['id'], equals('proj-001'));
     });
@@ -334,8 +334,8 @@ void main() {
       _writeProjectYaml('${tmpDir.path}/projects', 'proj');
       ticketStore.save(_makeTicket('proj', 1, 'todo', title: 'Active'));
 
-      await _makeRunner().run(['list', '-p', 'proj', '--archived']);
-      final result = _parseOutput();
+      await makeRunner().run(['list', '-p', 'proj', '--archived']);
+      final result = parseOutput();
       expect(result, isEmpty);
     });
   });

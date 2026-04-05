@@ -52,7 +52,7 @@ Examples:
     final whereFilters = argResults!['where'] as List<String>;
     final wherePairs = whereFilters.map((w) => parseSetOption(w)).toList();
 
-    const _metaHints = {
+    const metaHints = {
       'status': 'Use --status <value> to filter by status.',
       'id': '"id" is a computed meta field, not a filterable field.',
       'project': '"project" is a meta field. Use --project to specify the project.',
@@ -61,8 +61,8 @@ Examples:
       'updated_at': '"updated_at" is a meta field. Use --sort updated_at instead.',
     };
     for (final (field, _) in wherePairs) {
-      if (_metaHints.containsKey(field)) {
-        throw Exception('"$field" is not a field. ${_metaHints[field]}');
+      if (metaHints.containsKey(field)) {
+        throw Exception('"$field" is not a field. ${metaHints[field]}');
       }
     }
 
@@ -140,7 +140,7 @@ Examples:
         if (vb == null) return -1;
         int cmp;
         if (va is Comparable && vb is Comparable) {
-          cmp = (va as Comparable).compareTo(vb);
+          cmp = va.compareTo(vb);
         } else {
           cmp = va.toString().compareTo(vb.toString());
         }

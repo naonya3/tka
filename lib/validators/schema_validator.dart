@@ -26,15 +26,17 @@ class SchemaValidator {
       case FieldType.string:
         if (value is! String) return '$name: expected string';
       case FieldType.date:
-        if (value is! String || !_isValidDate(value))
+        if (value is! String || !_isValidDate(value)) {
           return '$name: expected date (YYYY-MM-DD)';
+        }
       case FieldType.number:
         if (value is! num) return '$name: expected number';
       case FieldType.list:
         if (value is! List) return '$name: expected list';
       case FieldType.enumType:
-        if (value is! String || values == null || !values.contains(value))
+        if (value is! String || values == null || !values.contains(value)) {
           return '$name: must be one of [${values?.join(', ') ?? ''}]';
+        }
     }
     return null;
   }

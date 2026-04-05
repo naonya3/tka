@@ -79,7 +79,7 @@ String renderDashboard({
     if (i == projectIndex) {
       nav.write(' $_bold$_invert ${projectNames[i]} $_reset');
     } else {
-      nav.write(' ${_dim}${projectNames[i]}$_reset');
+      nav.write(' $_dim${projectNames[i]}$_reset');
     }
   }
   buf.writeln(nav);
@@ -90,9 +90,9 @@ String renderDashboard({
     final s = statuses[i];
     final num = i + 1;
     if (activeFilters.contains(s)) {
-      filterBar.write('$_invert ${num}:$s $_reset ');
+      filterBar.write('$_invert $num:$s $_reset ');
     } else {
-      filterBar.write('${_dim}${num}:$s$_reset ');
+      filterBar.write('$_dim$num:$s$_reset ');
     }
   }
   buf.writeln(filterBar);
@@ -117,7 +117,7 @@ String renderDashboard({
   buf.writeln(
       '  ┌${'─' * (idW + 2)}┬${'─' * (statusW + 2)}┬${'─' * (titleW + 2)}┐');
   buf.writeln(
-      '  │ ${_bold}${_pad('ID', idW)}$_reset │ ${_bold}${_pad('STATUS', statusW)}$_reset │ ${_bold}${_pad('TITLE', titleW)}$_reset │');
+      '  │ $_bold${_pad('ID', idW)}$_reset │ $_bold${_pad('STATUS', statusW)}$_reset │ $_bold${_pad('TITLE', titleW)}$_reset │');
   buf.writeln(
       '  ├${'─' * (idW + 2)}┼${'─' * (statusW + 2)}┼${'─' * (titleW + 2)}┤');
 

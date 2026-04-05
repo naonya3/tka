@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:args/command_runner.dart';
+import 'package:path/path.dart' as p;
 import '../helpers/ticket_id.dart';
 import '../models/ticket.dart';
 import '../store/project_store.dart';
@@ -61,11 +62,14 @@ Output: {"id": "...", "from": "...", "to": "..."}''';
         'TKA_TICKET_SEQ': ticket.seq.toString(),
         'TKA_TICKET_STATUS': ticket.status,
         'TKA_TRANSITION_TO': targetStatus,
-        if (basePath != null) 'TKA_BASE_PATH': basePath!,
+        'TKA_BASE_PATH': ?basePath,
       };
+      final workDir = basePath != null ? p.dirname(basePath!) : null;
       final result = Platform.isWindows
-          ? Process.runSync('cmd', ['/c', verifyCmd], environment: env)
-          : Process.runSync('sh', ['-c', verifyCmd], environment: env);
+          ? Process.runSync('cmd', ['/c', verifyCmd],
+              environment: env, workingDirectory: workDir)
+          : Process.runSync('sh', ['-c', verifyCmd],
+              environment: env, workingDirectory: workDir);
       if (result.exitCode != 0) {
         final output = (result.stderr as String).isNotEmpty
             ? result.stderr as String
@@ -77,22 +81,24 @@ Output: {"id": "...", "from": "...", "to": "..."}''';
       }
     }
 
+    // Reload ticket in case verify script modified it
+    final current = ticketStore.load(project, seq);
     final now = DateTime.now();
     final nowStr = now.toIso8601String();
-    final oldJson = ticket.toJson();
+    final currentJson = current.toJson();
     final updated = Ticket(
-      project: ticket.project,
-      seq: ticket.seq,
+      project: current.project,
+      seq: current.seq,
       status: targetStatus,
-      fields: ticket.fields,
-      createdAt: ticket.createdAt,
+      fields: current.fields,
+      createdAt: current.createdAt,
       updatedAt: now,
-      createdAtRaw: oldJson['created_at'] as String,
+      createdAtRaw: currentJson['created_at'] as String,
       updatedAtRaw: nowStr,
     );
 
     ticketStore.save(updated,
-        expectedUpdatedAt: oldJson['updated_at'] as String);
+        expectedUpdatedAt: currentJson['updated_at'] as String);
     _out.writeln(jsonEncode({
       'id': ticket.id,
       'from': ticket.status,

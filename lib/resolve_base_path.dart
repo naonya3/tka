@@ -12,7 +12,7 @@ class ResolveNotFound extends ResolveException {
   ResolveNotFound() : super('.tka directory not found.');
 }
 
-String resolveBasePath({String? baseOption, String? cwd}) {
+String resolveBasePath({String? baseOption, String? cwd, Map<String, String>? environment}) {
   if (baseOption != null) {
     if (!Directory(baseOption).existsSync()) {
       throw ResolveNotFound();
@@ -20,7 +20,8 @@ String resolveBasePath({String? baseOption, String? cwd}) {
     return baseOption;
   }
 
-  final envBase = Platform.environment['TKA_BASE_PATH'];
+  final env = environment ?? Platform.environment;
+  final envBase = env['TKA_BASE_PATH'];
   if (envBase != null && envBase.isNotEmpty) {
     if (!Directory(envBase).existsSync()) {
       throw ResolveNotFound();

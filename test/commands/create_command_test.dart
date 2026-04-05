@@ -25,13 +25,13 @@ void main() {
     tmpDir.deleteSync(recursive: true);
   });
 
-  void _writeProject(String name, String content) {
+  void writeProject(String name, String content) {
     File('$basePath/projects/$name.yaml').writeAsStringSync(content);
   }
 
   group('create', () {
     test('creates a ticket with required fields via --set', () async {
-      _writeProject('todo', '''
+      writeProject('todo', '''
 version: 1
 name: todo
 description: Simple TODO
@@ -62,7 +62,7 @@ states:
     });
 
     test('creates sequential tickets', () async {
-      _writeProject('todo', '''
+      writeProject('todo', '''
 version: 1
 name: todo
 description: Simple TODO
@@ -96,7 +96,7 @@ states:
     });
 
     test('fails when required field missing', () async {
-      _writeProject('todo', '''
+      writeProject('todo', '''
 version: 1
 name: todo
 description: Simple TODO
@@ -118,7 +118,7 @@ states:
     });
 
     test('fails when unknown field specified', () async {
-      _writeProject('todo', '''
+      writeProject('todo', '''
 version: 1
 name: todo
 description: Simple TODO
@@ -162,7 +162,7 @@ states:
     });
 
     test('creates ticket with date field via --set', () async {
-      _writeProject('dated', '''
+      writeProject('dated', '''
 version: 1
 name: dated
 description: With date
@@ -190,7 +190,7 @@ states:
     });
 
     test('initializes list fields as empty list', () async {
-      _writeProject('dev', '''
+      writeProject('dev', '''
 version: 1
 name: dev
 description: Dev project

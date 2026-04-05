@@ -1,7 +1,7 @@
 import 'package:test/test.dart';
 import 'package:tka/models/project_definition.dart';
 import 'package:tka/models/field_definition.dart';
-import 'package:tka/models/state_machine.dart';
+
 
 void main() {
   group('ProjectDefinition.fromYaml', () {

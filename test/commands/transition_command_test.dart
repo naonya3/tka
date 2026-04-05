@@ -311,6 +311,152 @@ states:
       s.close();
     });
 
+    test('verify script runs with basePath parent as working directory',
+        () async {
+      // Simulate real layout: projectRoot/scripts/ and projectRoot/.tka/
+      final projectRoot =
+          Directory.systemTemp.createTempSync('verify_cwd_test_');
+      final tkaDir = Directory('${projectRoot.path}/.tka');
+      final projectsDir = Directory('${tkaDir.path}/projects');
+      projectsDir.createSync(recursive: true);
+      final dataDir = Directory('${tkaDir.path}/data');
+      dataDir.createSync(recursive: true);
+
+      // Script at projectRoot/scripts/check-cwd.sh
+      final scriptDir = Directory('${projectRoot.path}/scripts');
+      scriptDir.createSync();
+      final script = File('${scriptDir.path}/check-cwd.sh');
+      script.writeAsStringSync(
+          '#!/bin/bash\ntest "\$(pwd -P)" = "\$(cd "${projectRoot.path}" && pwd -P)"');
+      Process.runSync('chmod', ['+x', script.path]);
+
+      File('${projectsDir.path}/cwdcheck.yaml').writeAsStringSync('''
+version: 1
+name: cwdcheck
+description: test
+fields:
+  title: { type: string, required: true }
+states:
+  initial: todo
+  transitions:
+    todo:
+      targets: [done]
+      verify:
+        done: "./scripts/check-cwd.sh"
+''');
+
+      final ps = ProjectStore(projectsDir.path);
+      final ts = TicketStore(dataDir.path);
+
+      final ticket = Ticket(
+        project: 'cwdcheck',
+        seq: 1,
+        status: 'todo',
+        fields: {'title': 'Test'},
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      ts.save(ticket);
+
+      final buf = StringBuffer();
+      final s = IOSink(_StringSink(buf));
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: ps,
+          ticketStore: ts,
+          basePath: tkaDir.path,
+          out: s,
+        ));
+      await r.run(['transition', 'cwdcheck-001', '--to', 'done']);
+      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      expect(json['to'], equals('done'));
+      s.close();
+      projectRoot.deleteSync(recursive: true);
+    });
+
+    test('transition succeeds when verify script updates the ticket', () async {
+      // Simulate verify script that modifies the ticket (like setup-worktree.sh)
+      final projectRoot =
+          Directory.systemTemp.createTempSync('verify_update_test_');
+      final tkaDir = Directory('${projectRoot.path}/.tka');
+      final projectsDir = Directory('${tkaDir.path}/projects');
+      projectsDir.createSync(recursive: true);
+      final dataDir = Directory('${tkaDir.path}/data');
+      dataDir.createSync(recursive: true);
+
+      // Script that updates the ticket's field via direct JSON modification
+      final scriptDir = Directory('${projectRoot.path}/scripts');
+      scriptDir.createSync();
+      final script = File('${scriptDir.path}/update-ticket.sh');
+      // Modify the ticket JSON file directly to simulate tka update
+      script.writeAsStringSync('''#!/bin/bash
+TICKET_FILE="${tkaDir.path}/data/updproj/001.json"
+# Read, modify updatedAt, and write back
+python3 -c "
+import json, datetime
+with open('\$TICKET_FILE') as f: d = json.load(f)
+d['updated_at'] = datetime.datetime.now().isoformat()
+d['fields']['worktree'] = '/tmp/test'
+with open('\$TICKET_FILE', 'w') as f: json.dump(d, f)
+"
+''');
+      Process.runSync('chmod', ['+x', script.path]);
+
+      File('${projectsDir.path}/updproj.yaml').writeAsStringSync('''
+version: 1
+name: updproj
+description: test
+fields:
+  title: { type: string, required: true }
+  worktree: { type: string }
+states:
+  initial: todo
+  transitions:
+    todo:
+      targets: [implementing]
+      verify:
+        implementing: "./scripts/update-ticket.sh"
+    implementing: [done]
+''');
+
+      final ps = ProjectStore(projectsDir.path);
+      final ts = TicketStore(dataDir.path);
+
+      final ticket = Ticket(
+        project: 'updproj',
+        seq: 1,
+        status: 'todo',
+        fields: {'title': 'Test'},
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      ts.save(ticket);
+
+      final buf = StringBuffer();
+      final s = IOSink(_StringSink(buf));
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: ps,
+          ticketStore: ts,
+          basePath: tkaDir.path,
+          out: s,
+        ));
+      await r.run(['transition', 'updproj-001', '--to', 'implementing']);
+      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      expect(json['to'], equals('implementing'));
+
+      // Verify the ticket has both the verify script's changes and the new status
+      final loaded = ts.load('updproj', 1);
+      expect(loaded.status, equals('implementing'));
+      expect(loaded.fields['worktree'], equals('/tmp/test'));
+      s.close();
+      projectRoot.deleteSync(recursive: true);
+    });
+
     test('transition without verify proceeds normally', () async {
       // First transition to red (no verify on todo->red)
       final ticket0 = Ticket(

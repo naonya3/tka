@@ -18,7 +18,7 @@ void main() {
       final explicit = Directory('${tmpDir.path}/explicit/.tka')
         ..createSync(recursive: true);
       final result = resolveBasePath(
-        baseOption: explicit.parent.path + '/.tka',
+        baseOption: '${explicit.parent.path}/.tka',
         cwd: tmpDir.path,
       );
       expect(result, explicit.path);
@@ -36,7 +36,7 @@ void main() {
 
     test('finds .tka in current directory', () {
       Directory('${tmpDir.path}/.tka').createSync();
-      final result = resolveBasePath(cwd: tmpDir.path);
+      final result = resolveBasePath(cwd: tmpDir.path, environment: {});
       expect(result, '${tmpDir.path}/.tka');
     });
 
@@ -44,7 +44,7 @@ void main() {
       final child = Directory('${tmpDir.path}/sub/deep')
         ..createSync(recursive: true);
       Directory('${tmpDir.path}/.tka').createSync();
-      final result = resolveBasePath(cwd: child.path);
+      final result = resolveBasePath(cwd: child.path, environment: {});
       expect(result, '${tmpDir.path}/.tka');
     });
 
@@ -52,7 +52,7 @@ void main() {
       final child = Directory('${tmpDir.path}/a/b/c')
         ..createSync(recursive: true);
       Directory('${tmpDir.path}/.tka').createSync();
-      final result = resolveBasePath(cwd: child.path);
+      final result = resolveBasePath(cwd: child.path, environment: {});
       expect(result, '${tmpDir.path}/.tka');
     });
 
@@ -60,7 +60,7 @@ void main() {
       final child = Directory('${tmpDir.path}/empty/sub')
         ..createSync(recursive: true);
       expect(
-        () => resolveBasePath(cwd: child.path),
+        () => resolveBasePath(cwd: child.path, environment: {}),
         throwsA(isA<ResolveNotFound>()),
       );
     });

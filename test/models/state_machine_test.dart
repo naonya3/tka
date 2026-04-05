@@ -119,11 +119,15 @@ void main() {
             'todo': ['red'],
             'red': {
               'targets': ['green'],
-              'verify': 'dart test --reporter json',
+              'verify': {
+                'green': 'dart test --reporter json',
+              },
             },
             'green': {
               'targets': ['refactor'],
-              'verify': 'dart test',
+              'verify': {
+                'refactor': 'dart test',
+              },
             },
             'refactor': ['done'],
           },
@@ -158,6 +162,26 @@ void main() {
       test('isTerminal works with verify format', () {
         expect(withVerify.isTerminal('done'), isTrue);
         expect(withVerify.isTerminal('red'), isFalse);
+      });
+
+      test('verify only applies to specified target', () {
+        final selective = StateMachine.fromYaml({
+          'initial': 'red',
+          'transitions': {
+            'red': {
+              'targets': ['green', 'todo', 'close'],
+              'verify': {
+                'green': 'dart test',
+              },
+            },
+          },
+        });
+        expect(selective.getVerify('red', 'green'), equals('dart test'));
+        expect(selective.getVerify('red', 'todo'), isNull);
+        expect(selective.getVerify('red', 'close'), isNull);
+        expect(selective.canTransition('red', 'green'), isTrue);
+        expect(selective.canTransition('red', 'todo'), isTrue);
+        expect(selective.canTransition('red', 'close'), isTrue);
       });
     });
   });

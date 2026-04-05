@@ -22,13 +22,13 @@ class StateMachine {
         // Simple format: todo: [in_progress, done]
         transitions[from] = value.cast<String>().toList();
       } else if (value is Map) {
-        // Verify format: red: { targets: [green], verify: "dart test" }
+        // Verify format: red: { targets: [green, todo], verify: { green: "dart test" } }
         final targets = (value['targets'] as List).cast<String>().toList();
         transitions[from] = targets;
-        final verify = value['verify'] as String?;
-        if (verify != null) {
-          for (final target in targets) {
-            verifyCommands['$from->$target'] = verify;
+        final verify = value['verify'];
+        if (verify is Map) {
+          for (final vEntry in verify.entries) {
+            verifyCommands['$from->${vEntry.key}'] = vEntry.value as String;
           }
         }
       } else {

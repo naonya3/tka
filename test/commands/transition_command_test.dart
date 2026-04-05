@@ -174,7 +174,8 @@ states:
     todo: [red]
     red:
       targets: [green]
-      verify: "true"
+      verify:
+        green: "true"
     green: [done]
 ''');
 
@@ -229,7 +230,8 @@ states:
   transitions:
     todo:
       targets: [done]
-      verify: "test -n \\"\$TKA_TICKET_ID\\" && test -n \\"\$TKA_BASE_PATH\\""
+      verify:
+        done: "test -n \\"\$TKA_TICKET_ID\\" && test -n \\"\$TKA_BASE_PATH\\""
 ''');
 
       final ticket = Ticket(
@@ -272,7 +274,8 @@ states:
   transitions:
     todo:
       targets: [done]
-      verify: "false"
+      verify:
+        done: "false"
 ''');
 
       final ticket = Ticket(

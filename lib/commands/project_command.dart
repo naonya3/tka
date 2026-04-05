@@ -293,7 +293,10 @@ Use this to understand what JSON to pass to "tka project add --schema".''';
             '<status>': ['<target_status>', '...'],
             '<status_with_verify>': {
               'targets': ['<target_status>', '...'],
-              'verify': 'shell command (exit 0 = pass, non-zero = block)',
+              'verify': {
+                '<target_status>':
+                    'shell command (exit 0 = pass, non-zero = block)',
+              },
             },
           },
         },

@@ -120,10 +120,12 @@ states:
     todo: [red]
     red:
       targets: [green]
-      verify: "dart test"        # must pass before red → green
+      verify:
+        green: "dart test"         # must pass before red → green
     green:
-      targets: [done]
-      verify: "./scripts/review.sh"
+      targets: [done, red]
+      verify:
+        done: "./scripts/review.sh"  # review before done, but red needs no check
 ```
 
 When an agent runs `tka transition ticket-001 --to green`, tka executes `dart test` first. If tests fail, the transition is rejected:

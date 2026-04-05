@@ -164,6 +164,27 @@ void main() {
         expect(withVerify.isTerminal('red'), isFalse);
       });
 
+      test('toTransitionsJson includes verify info for verify transitions', () {
+        final result = withVerify.toTransitionsJson();
+        // Simple list transitions remain as lists
+        expect(result['todo'], equals(['red']));
+        expect(result['refactor'], equals(['done']));
+        // Verify transitions become maps with targets and verify
+        expect(result['red'], equals({
+          'targets': ['green'],
+          'verify': {'green': 'dart test --reporter json'},
+        }));
+        expect(result['green'], equals({
+          'targets': ['refactor'],
+          'verify': {'refactor': 'dart test'},
+        }));
+      });
+
+      test('toTransitionsJson for simple machine has no verify maps', () {
+        final result = simpleTodo.toTransitionsJson();
+        expect(result['todo'], equals(['done']));
+      });
+
       test('verify only applies to specified target', () {
         final selective = StateMachine.fromYaml({
           'initial': 'red',
@@ -182,6 +203,25 @@ void main() {
         expect(selective.canTransition('red', 'green'), isTrue);
         expect(selective.canTransition('red', 'todo'), isTrue);
         expect(selective.canTransition('red', 'close'), isTrue);
+      });
+
+      test('toTransitionsJson for selective verify includes only verified targets', () {
+        final selective = StateMachine.fromYaml({
+          'initial': 'red',
+          'transitions': {
+            'red': {
+              'targets': ['green', 'todo', 'close'],
+              'verify': {
+                'green': 'dart test',
+              },
+            },
+          },
+        });
+        final result = selective.toTransitionsJson();
+        expect(result['red'], equals({
+          'targets': ['green', 'todo', 'close'],
+          'verify': {'green': 'dart test'},
+        }));
       });
     });
   });

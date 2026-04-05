@@ -36,7 +36,7 @@ tka project show <name>                   # Full definition as JSON
 tka project schema                        # Schema spec for --schema input
 tka project add <name> --template <tpl>   # Create from template
 tka project add <name> --schema '<json>'  # Create from JSON
-tka project archive <name>                # Archive a project
+tka project archive <name> [--force]      # Archive a project
 tka project unarchive <name>              # Restore archived project
 tka project list --archived               # List archived projects
 tka project templates                     # Available templates

@@ -375,6 +375,26 @@ states:
         throwsA(isA<Exception>()),
       );
     });
+
+    test('overwrites existing archived project with same name', () async {
+      // First: create and archive a project
+      writeProject('reuse', _simpleProject('reuse'));
+      final output = <String>[];
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'archive', 'reuse']);
+
+      // Second: create a new project with the same name and archive again
+      writeProject('reuse', _simpleProject('reuse'));
+      output.clear();
+      await runner.run(['project', 'archive', 'reuse']);
+
+      final json = jsonDecode(output[0]) as Map<String, dynamic>;
+      expect(json['project'], 'reuse');
+      expect(json['archived'], true);
+      expect(File('$basePath/projects/reuse.yaml').existsSync(), false);
+      expect(File('$basePath/projects/archived/reuse.yaml').existsSync(), true);
+    });
   });
 
   group('project unarchive', () {

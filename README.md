@@ -108,6 +108,70 @@ The schema enforces your workflow so agents don't need to memorize rules — the
 
 This means you can design any workflow — TDD cycles, bug triage, content pipelines — and trust that agents will follow it.
 
+## Verify — Enforce Before Transitioning
+
+Transitions can require a command to pass before proceeding. If the command exits non-zero, the transition is blocked.
+
+```yaml
+# In project YAML
+states:
+  initial: todo
+  transitions:
+    todo: [red]
+    red:
+      targets: [green]
+      verify: "dart test"        # must pass before red → green
+    green:
+      targets: [done]
+      verify: "./scripts/review.sh"
+```
+
+When an agent runs `tka transition ticket-001 --to green`, tka executes `dart test` first. If tests fail, the transition is rejected:
+
+```json
+{"error": "Verify failed for transition red → green. Command: dart test (exit code 1). Output: Expected 3 tests, found 0"}
+```
+
+The agent reads the error and self-corrects — write the tests, run again.
+
+### Using AI as a reviewer
+
+Verify can run any command, including `claude -p` for AI-powered review:
+
+```bash
+#!/bin/bash
+# scripts/review.sh
+RESULT=$(claude --dangerously-skip-permissions -p \
+  "Run 'tka --base $TKA_BASE_PATH show $TKA_TICKET_ID' to read the ticket.
+   Review whether the implementation meets the requirements.
+   Respond with exactly 'PASS' if OK, or 'FAIL:' followed by the reason." \
+  2>/dev/null)
+
+if echo "$RESULT" | grep -q "^PASS"; then
+  exit 0
+fi
+
+echo "$RESULT" >&2
+exit 1
+```
+
+This gives you an independent evaluator with a fresh context — no self-evaluation bias.
+
+### Environment variables
+
+Verify commands receive these environment variables:
+
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `TKA_TICKET_ID` | `myproj-003` | Ticket ID |
+| `TKA_TICKET_PROJECT` | `myproj` | Project name |
+| `TKA_TICKET_SEQ` | `3` | Sequence number |
+| `TKA_TICKET_STATUS` | `red` | Current status (source) |
+| `TKA_TRANSITION_TO` | `green` | Target status |
+| `TKA_BASE_PATH` | `/path/to/.tka` | Resolved .tka directory |
+
+`TKA_BASE_PATH` is also used for `.tka` resolution: `--base` > `TKA_BASE_PATH` > `./.tka` > parent directory search. This means verify scripts that spawn sub-agents can pass the tka context through automatically.
+
 ## Schema Definition
 
 Projects are defined by fields and a state machine. Use `tka project schema` to get the full spec, then pass JSON to `--schema`:

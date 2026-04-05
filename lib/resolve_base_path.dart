@@ -20,6 +20,14 @@ String resolveBasePath({String? baseOption, String? cwd}) {
     return baseOption;
   }
 
+  final envBase = Platform.environment['TKA_BASE_PATH'];
+  if (envBase != null && envBase.isNotEmpty) {
+    if (!Directory(envBase).existsSync()) {
+      throw ResolveNotFound();
+    }
+    return envBase;
+  }
+
   var dir = cwd ?? Directory.current.path;
   while (true) {
     final candidate = p.join(dir, '.tka');

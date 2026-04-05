@@ -291,6 +291,10 @@ Use this to understand what JSON to pass to "tka project add --schema".''';
           'initial': '<initial_status>',
           'transitions': {
             '<status>': ['<target_status>', '...'],
+            '<status_with_verify>': {
+              'targets': ['<target_status>', '...'],
+              'verify': 'shell command (exit 0 = pass, non-zero = block)',
+            },
           },
         },
       },
@@ -304,7 +308,19 @@ Use this to understand what JSON to pass to "tka project add --schema".''';
           'required_properties': ['values'],
         },
       },
-      'states_note': 'States that appear only as transition targets (not as keys) are terminal states.',
+      'states_note':
+          'States that appear only as transition targets (not as keys) are terminal states.',
+      'verify_note':
+          'Transitions with "verify" run the command before transitioning. '
+          'If the command exits non-zero, the transition is blocked.',
+      'verify_env': {
+        'TKA_TICKET_ID': 'Ticket ID (e.g. "myproj-003")',
+        'TKA_TICKET_PROJECT': 'Project name',
+        'TKA_TICKET_SEQ': 'Ticket sequence number',
+        'TKA_TICKET_STATUS': 'Current status (transition source)',
+        'TKA_TRANSITION_TO': 'Target status',
+        'TKA_BASE_PATH': 'Resolved .tka directory path',
+      },
     };
     _printer(jsonEncode(schema));
   }

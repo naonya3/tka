@@ -77,7 +77,7 @@ Future<void> main(List<String> args) async {
 All output is machine-readable JSON on stdout. Errors go to stderr as JSON.
 No human-friendly formatting — designed to be consumed by AI agents directly.
 
-.tka resolution: --base <path> > ./.tka > search parent directories.
+.tka resolution: --base <path> > TKA_BASE_PATH env > ./.tka > search parent directories.
 
 Examples:
   tka init
@@ -115,7 +115,7 @@ Long text: use pipe (--set field=-) or file (--set field=@path):
     ..addCommand(UpdateCommand(
         projectStore: projectStore, ticketStore: ticketStore))
     ..addCommand(TransitionCommand(
-        projectStore: projectStore, ticketStore: ticketStore))
+        projectStore: projectStore, ticketStore: ticketStore, basePath: basePath))
     ..addCommand(AppendCommand(
         projectStore: projectStore, ticketStore: ticketStore))
     ..addCommand(ArchiveCommand(ticketStore: ticketStore))

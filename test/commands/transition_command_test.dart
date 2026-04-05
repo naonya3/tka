@@ -150,6 +150,193 @@ states:
     );
   });
 
+  group('verify', () {
+    late Directory verifyTmpDir;
+    late ProjectStore verifyProjectStore;
+    late TicketStore verifyTicketStore;
+
+    setUp(() {
+      verifyTmpDir = Directory.systemTemp.createTempSync('verify_test_');
+      final projectsDir = Directory('${verifyTmpDir.path}/projects');
+      projectsDir.createSync(recursive: true);
+      final dataDir = Directory('${verifyTmpDir.path}/data');
+      dataDir.createSync(recursive: true);
+
+      File('${projectsDir.path}/tdd.yaml').writeAsStringSync('''
+version: 1
+name: tdd
+description: test
+fields:
+  title: { type: string, required: true }
+states:
+  initial: todo
+  transitions:
+    todo: [red]
+    red:
+      targets: [green]
+      verify: "true"
+    green: [done]
+''');
+
+      verifyProjectStore = ProjectStore(projectsDir.path);
+      verifyTicketStore = TicketStore(dataDir.path);
+
+      final ticket = Ticket(
+        project: 'tdd',
+        seq: 1,
+        status: 'red',
+        fields: {'title': 'Test'},
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      verifyTicketStore.save(ticket);
+    });
+
+    tearDown(() {
+      verifyTmpDir.deleteSync(recursive: true);
+    });
+
+    test('transition succeeds when verify command passes', () async {
+      final buf = StringBuffer();
+      final s = IOSink(_StringSink(buf));
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: verifyProjectStore,
+          ticketStore: verifyTicketStore,
+          out: s,
+        ));
+      await r.run(['transition', 'tdd-001', '--to', 'green']);
+      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      expect(json['to'], equals('green'));
+
+      final loaded = verifyTicketStore.load('tdd', 1);
+      expect(loaded.status, equals('green'));
+      s.close();
+    });
+
+    test('verify command receives TKA environment variables', () async {
+      // Create project with verify that checks env vars
+      File('${verifyTmpDir.path}/projects/envcheck.yaml').writeAsStringSync('''
+version: 1
+name: envcheck
+description: test
+fields:
+  title: { type: string, required: true }
+states:
+  initial: todo
+  transitions:
+    todo:
+      targets: [done]
+      verify: "test -n \\"\$TKA_TICKET_ID\\" && test -n \\"\$TKA_BASE_PATH\\""
+''');
+
+      final ticket = Ticket(
+        project: 'envcheck',
+        seq: 1,
+        status: 'todo',
+        fields: {'title': 'Test'},
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      verifyTicketStore.save(ticket);
+
+      final buf = StringBuffer();
+      final s = IOSink(_StringSink(buf));
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: verifyProjectStore,
+          ticketStore: verifyTicketStore,
+          basePath: verifyTmpDir.path,
+          out: s,
+        ));
+      await r.run(['transition', 'envcheck-001', '--to', 'done']);
+      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      expect(json['to'], equals('done'));
+      s.close();
+    });
+
+    test('transition fails when verify command fails', () async {
+      // Create project with failing verify
+      File('${verifyTmpDir.path}/projects/fail.yaml').writeAsStringSync('''
+version: 1
+name: fail
+description: test
+fields:
+  title: { type: string, required: true }
+states:
+  initial: todo
+  transitions:
+    todo:
+      targets: [done]
+      verify: "false"
+''');
+
+      final ticket = Ticket(
+        project: 'fail',
+        seq: 1,
+        status: 'todo',
+        fields: {'title': 'Test'},
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      verifyTicketStore.save(ticket);
+
+      final buf = StringBuffer();
+      final s = IOSink(_StringSink(buf));
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: verifyProjectStore,
+          ticketStore: verifyTicketStore,
+          out: s,
+        ));
+
+      expect(
+        () => r.run(['transition', 'fail-001', '--to', 'done']),
+        throwsA(isA<Exception>().having(
+            (e) => e.toString(), 'message', contains('Verify failed'))),
+      );
+
+      // Ticket should NOT have transitioned
+      final loaded = verifyTicketStore.load('fail', 1);
+      expect(loaded.status, equals('todo'));
+      s.close();
+    });
+
+    test('transition without verify proceeds normally', () async {
+      // First transition to red (no verify on todo->red)
+      final ticket0 = Ticket(
+        project: 'tdd',
+        seq: 2,
+        status: 'todo',
+        fields: {'title': 'No verify'},
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      verifyTicketStore.save(ticket0);
+
+      final buf = StringBuffer();
+      final s = IOSink(_StringSink(buf));
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: verifyProjectStore,
+          ticketStore: verifyTicketStore,
+          out: s,
+        ));
+      await r.run(['transition', 'tdd-002', '--to', 'red']);
+      final loaded = verifyTicketStore.load('tdd', 2);
+      expect(loaded.status, equals('red'));
+      s.close();
+    });
+  });
+
   test('updates updatedAt on transition', () async {
     await runner.run(['transition', 'game-dev-001', '--to', 'in_progress']);
     final loaded = ticketStore.load('game-dev', 1);

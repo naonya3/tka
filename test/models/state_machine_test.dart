@@ -100,5 +100,65 @@ void main() {
       expect(simpleTodo.isTerminal('done'), isTrue);
       expect(simpleTodo.isTerminal('todo'), isFalse);
     });
+
+    test('getVerify returns null for transitions without verify', () {
+      expect(gameDev.getVerify('backlog', 'in_progress'), isNull);
+    });
+
+    test('getVerify returns null for simple list transitions', () {
+      expect(simpleTodo.getVerify('todo', 'done'), isNull);
+    });
+
+    group('verify transitions', () {
+      late StateMachine withVerify;
+
+      setUp(() {
+        withVerify = StateMachine.fromYaml({
+          'initial': 'todo',
+          'transitions': {
+            'todo': ['red'],
+            'red': {
+              'targets': ['green'],
+              'verify': 'dart test --reporter json',
+            },
+            'green': {
+              'targets': ['refactor'],
+              'verify': 'dart test',
+            },
+            'refactor': ['done'],
+          },
+        });
+      });
+
+      test('parses mixed simple and verify transitions', () {
+        expect(withVerify.canTransition('todo', 'red'), isTrue);
+        expect(withVerify.canTransition('red', 'green'), isTrue);
+        expect(withVerify.canTransition('green', 'refactor'), isTrue);
+        expect(withVerify.canTransition('refactor', 'done'), isTrue);
+      });
+
+      test('getVerify returns command for verify transitions', () {
+        expect(withVerify.getVerify('red', 'green'),
+            equals('dart test --reporter json'));
+        expect(withVerify.getVerify('green', 'refactor'),
+            equals('dart test'));
+      });
+
+      test('getVerify returns null for simple transitions', () {
+        expect(withVerify.getVerify('todo', 'red'), isNull);
+        expect(withVerify.getVerify('refactor', 'done'), isNull);
+      });
+
+      test('getAvailableTransitions works with verify format', () {
+        expect(withVerify.getAvailableTransitions('red'), equals(['green']));
+        expect(withVerify.getAvailableTransitions('green'),
+            equals(['refactor']));
+      });
+
+      test('isTerminal works with verify format', () {
+        expect(withVerify.isTerminal('done'), isTrue);
+        expect(withVerify.isTerminal('red'), isFalse);
+      });
+    });
   });
 }

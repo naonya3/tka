@@ -35,7 +35,7 @@ Use --pretty for indented output.''';
     }
 
     final rawId = args.first;
-    final (project, seq) = parseTicketId(rawId);
+    final (project, seq) = _parseIdOrUsageError(rawId);
 
     final ticket = ticketStore.load(project, seq);
     final json = ticket.toJson();
@@ -60,4 +60,11 @@ Use --pretty for indented output.''';
     }
   }
 
+  (String, int) _parseIdOrUsageError(String rawId) {
+    try {
+      return parseTicketId(rawId);
+    } on FormatException {
+      usageException('Invalid ticket id format: $rawId');
+    }
+  }
 }

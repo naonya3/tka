@@ -94,7 +94,7 @@ void main() {
     test('throws on invalid id format', () async {
       expect(
         () => makeRunner().run(['show', 'nohyphen']),
-        throwsA(isA<FormatException>()),
+        throwsA(isA<UsageException>()),
       );
     });
 

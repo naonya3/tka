@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,14 +7,14 @@ import 'package:tka/commands/transition_command.dart';
 import 'package:tka/models/ticket.dart';
 import 'package:tka/store/project_store.dart';
 import 'package:tka/store/ticket_store.dart';
+import '../test_helpers.dart';
 
 void main() {
   late Directory tmpDir;
   late ProjectStore projectStore;
   late TicketStore ticketStore;
   late CommandRunner<void> runner;
-  late StringBuffer output;
-  late IOSink sink;
+  late TestSink out;
 
   setUp(() {
     tmpDir = Directory.systemTemp.createTempSync('transition_cmd_test_');
@@ -54,24 +53,22 @@ states:
     );
     ticketStore.save(ticket);
 
-    output = StringBuffer();
-    sink = IOSink(_StringSink(output));
+    out = TestSink();
     runner = CommandRunner<void>('ticket', 'test')
       ..addCommand(TransitionCommand(
         projectStore: projectStore,
         ticketStore: ticketStore,
-        out: sink,
+        out: out,
       ));
   });
 
   tearDown(() {
-    sink.close();
     tmpDir.deleteSync(recursive: true);
   });
 
   test('transitions ticket to valid status', () async {
     await runner.run(['transition', 'game-dev-001', '--to', 'in_progress']);
-    final json = jsonDecode(output.toString().trim()) as Map<String, dynamic>;
+    final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
     expect(json['id'], equals('game-dev-001'));
     expect(json['from'], equals('backlog'));
     expect(json['to'], equals('in_progress'));
@@ -98,26 +95,24 @@ states:
     expect(loaded.status, equals('in_progress'));
 
     // Create a new runner with fresh sink
-    final output2 = StringBuffer();
-    final sink2 = IOSink(_StringSink(output2));
+    final out2 = TestSink();
     final runner2 = CommandRunner<void>('ticket', 'test')
       ..addCommand(TransitionCommand(
         projectStore: projectStore,
         ticketStore: ticketStore,
-        out: sink2,
+        out: out2,
       ));
 
     await runner2.run(['transition', 'game-dev-001', '--to', 'review']);
     loaded = ticketStore.load('game-dev', 1);
     expect(loaded.status, equals('review'));
 
-    final output3 = StringBuffer();
-    final sink3 = IOSink(_StringSink(output3));
+    final out3 = TestSink();
     final runner3 = CommandRunner<void>('ticket', 'test')
       ..addCommand(TransitionCommand(
         projectStore: projectStore,
         ticketStore: ticketStore,
-        out: sink3,
+        out: out3,
       ));
 
     await runner3.run(['transition', 'game-dev-001', '--to', 'done']);
@@ -125,22 +120,18 @@ states:
     expect(loaded.status, equals('done'));
 
     // done is terminal
-    final output4 = StringBuffer();
-    final sink4 = IOSink(_StringSink(output4));
+    final out4 = TestSink();
     final runner4 = CommandRunner<void>('ticket', 'test')
       ..addCommand(TransitionCommand(
         projectStore: projectStore,
         ticketStore: ticketStore,
-        out: sink4,
+        out: out4,
       ));
 
     expect(
       () => runner4.run(['transition', 'game-dev-001', '--to', 'backlog']),
       throwsException,
     );
-    sink2.close();
-    sink3.close();
-    sink4.close();
   });
 
   test('throws when no ticket id provided', () async {
@@ -200,21 +191,19 @@ states:
     });
 
     test('transition succeeds when verify command passes', () async {
-      final buf = StringBuffer();
-      final s = IOSink(_StringSink(buf));
+      final out = TestSink();
       final r = CommandRunner<void>('tka', 'test')
         ..addCommand(TransitionCommand(
           projectStore: verifyProjectStore,
           ticketStore: verifyTicketStore,
-          out: s,
+          out: out,
         ));
       await r.run(['transition', 'tdd-001', '--to', 'green']);
-      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
       expect(json['to'], equals('green'));
 
       final loaded = verifyTicketStore.load('tdd', 1);
       expect(loaded.status, equals('green'));
-      s.close();
     });
 
     test('verify command receives TKA environment variables', () async {
@@ -246,19 +235,17 @@ states:
       );
       verifyTicketStore.save(ticket);
 
-      final buf = StringBuffer();
-      final s = IOSink(_StringSink(buf));
+      final out = TestSink();
       final r = CommandRunner<void>('tka', 'test')
         ..addCommand(TransitionCommand(
           projectStore: verifyProjectStore,
           ticketStore: verifyTicketStore,
           basePath: verifyTmpDir.path,
-          out: s,
+          out: out,
         ));
       await r.run(['transition', 'envcheck-001', '--to', 'done']);
-      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
       expect(json['to'], equals('done'));
-      s.close();
     });
 
     test('transition fails when verify command fails', () async {
@@ -290,13 +277,12 @@ states:
       );
       verifyTicketStore.save(ticket);
 
-      final buf = StringBuffer();
-      final s = IOSink(_StringSink(buf));
+      final out = TestSink();
       final r = CommandRunner<void>('tka', 'test')
         ..addCommand(TransitionCommand(
           projectStore: verifyProjectStore,
           ticketStore: verifyTicketStore,
-          out: s,
+          out: out,
         ));
 
       expect(
@@ -308,7 +294,6 @@ states:
       // Ticket should NOT have transitioned
       final loaded = verifyTicketStore.load('fail', 1);
       expect(loaded.status, equals('todo'));
-      s.close();
     });
 
     test('verify script runs with basePath parent as working directory',
@@ -360,19 +345,17 @@ states:
       );
       ts.save(ticket);
 
-      final buf = StringBuffer();
-      final s = IOSink(_StringSink(buf));
+      final out = TestSink();
       final r = CommandRunner<void>('tka', 'test')
         ..addCommand(TransitionCommand(
           projectStore: ps,
           ticketStore: ts,
           basePath: tkaDir.path,
-          out: s,
+          out: out,
         ));
       await r.run(['transition', 'cwdcheck-001', '--to', 'done']);
-      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
       expect(json['to'], equals('done'));
-      s.close();
       projectRoot.deleteSync(recursive: true);
     });
 
@@ -436,24 +419,22 @@ states:
       );
       ts.save(ticket);
 
-      final buf = StringBuffer();
-      final s = IOSink(_StringSink(buf));
+      final out = TestSink();
       final r = CommandRunner<void>('tka', 'test')
         ..addCommand(TransitionCommand(
           projectStore: ps,
           ticketStore: ts,
           basePath: tkaDir.path,
-          out: s,
+          out: out,
         ));
       await r.run(['transition', 'updproj-001', '--to', 'implementing']);
-      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
       expect(json['to'], equals('implementing'));
 
       // Verify the ticket has both the verify script's changes and the new status
       final loaded = ts.load('updproj', 1);
       expect(loaded.status, equals('implementing'));
       expect(loaded.fields['worktree'], equals('/tmp/test'));
-      s.close();
       projectRoot.deleteSync(recursive: true);
     });
 
@@ -485,19 +466,17 @@ states:
       );
       verifyTicketStore.save(ticket);
 
-      final buf = StringBuffer();
-      final s = IOSink(_StringSink(buf));
+      final out = TestSink();
       final r = CommandRunner<void>('tka', 'test')
         ..addCommand(TransitionCommand(
           projectStore: verifyProjectStore,
           ticketStore: verifyTicketStore,
-          out: s,
+          out: out,
         ));
       await r.run(['transition', 'echo-proj-001', '--to', 'done']);
-      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
       expect(json['to'], equals('done'));
       expect(json['output'], equals('worktree created at /tmp/wt'));
-      s.close();
     });
 
     test('verify output included in failure error', () async {
@@ -528,13 +507,12 @@ states:
       );
       verifyTicketStore.save(ticket);
 
-      final buf = StringBuffer();
-      final s = IOSink(_StringSink(buf));
+      final out = TestSink();
       final r = CommandRunner<void>('tka', 'test')
         ..addCommand(TransitionCommand(
           projectStore: verifyProjectStore,
           ticketStore: verifyTicketStore,
-          out: s,
+          out: out,
         ));
 
       expect(
@@ -545,23 +523,20 @@ states:
               contains('3 tests failed'),
             ))),
       );
-      s.close();
     });
 
     test('no output field when verify produces no output', () async {
-      final buf = StringBuffer();
-      final s = IOSink(_StringSink(buf));
+      final out = TestSink();
       final r = CommandRunner<void>('tka', 'test')
         ..addCommand(TransitionCommand(
           projectStore: verifyProjectStore,
           ticketStore: verifyTicketStore,
-          out: s,
+          out: out,
         ));
       await r.run(['transition', 'tdd-001', '--to', 'green']);
-      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
       expect(json['to'], equals('green'));
       expect(json.containsKey('output'), isFalse);
-      s.close();
     });
 
     test('transition without verify proceeds normally', () async {
@@ -578,18 +553,16 @@ states:
       );
       verifyTicketStore.save(ticket0);
 
-      final buf = StringBuffer();
-      final s = IOSink(_StringSink(buf));
+      final out = TestSink();
       final r = CommandRunner<void>('tka', 'test')
         ..addCommand(TransitionCommand(
           projectStore: verifyProjectStore,
           ticketStore: verifyTicketStore,
-          out: s,
+          out: out,
         ));
       await r.run(['transition', 'tdd-002', '--to', 'red']);
       final loaded = verifyTicketStore.load('tdd', 2);
       expect(loaded.status, equals('red'));
-      s.close();
     });
   });
 
@@ -615,13 +588,13 @@ states:
 ''');
 
     await runner.run(['transition', 'game-dev-001', '--to', 'in_progress']);
-    final json = jsonDecode(output.toString().trim()) as Map<String, dynamic>;
+    final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
     expect(json['guide'], equals('Start working on the task'));
   });
 
   test('no guide field when target state has no guide', () async {
     await runner.run(['transition', 'game-dev-001', '--to', 'in_progress']);
-    final json = jsonDecode(output.toString().trim()) as Map<String, dynamic>;
+    final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
     expect(json.containsKey('guide'), isFalse);
   });
 
@@ -632,20 +605,4 @@ states:
     expect(json['updated_at'], isNot(equals('2026-04-01T10:00:00+09:00')));
     expect(json['created_at'], equals('2026-04-01T10:00:00+09:00'));
   });
-}
-
-class _StringSink implements StreamConsumer<List<int>> {
-  final StringBuffer _buffer;
-  _StringSink(this._buffer);
-
-  @override
-  Future addStream(Stream<List<int>> stream) {
-    final completer = stream.listen((data) {
-      _buffer.write(utf8.decode(data));
-    });
-    return completer.asFuture();
-  }
-
-  @override
-  Future close() async {}
 }

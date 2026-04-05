@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,14 +7,14 @@ import 'package:tka/commands/append_command.dart';
 import 'package:tka/models/ticket.dart';
 import 'package:tka/store/project_store.dart';
 import 'package:tka/store/ticket_store.dart';
+import '../test_helpers.dart';
 
 void main() {
   late Directory tmpDir;
   late ProjectStore projectStore;
   late TicketStore ticketStore;
   late CommandRunner<void> runner;
-  late StringBuffer output;
-  late IOSink sink;
+  late TestSink out;
 
   setUp(() {
     tmpDir = Directory.systemTemp.createTempSync('append_cmd_test_');
@@ -53,18 +52,16 @@ states:
     );
     ticketStore.save(ticket);
 
-    output = StringBuffer();
-    sink = IOSink(_StringSink(output));
+    out = TestSink();
     runner = CommandRunner<void>('ticket', 'test')
       ..addCommand(AppendCommand(
         projectStore: projectStore,
         ticketStore: ticketStore,
-        out: sink,
+        out: out,
       ));
   });
 
   tearDown(() {
-    sink.close();
     tmpDir.deleteSync(recursive: true);
   });
 
@@ -77,7 +74,7 @@ states:
       '--value',
       'Second entry'
     ]);
-    final json = jsonDecode(output.toString().trim()) as Map<String, dynamic>;
+    final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
     expect(json['id'], equals('game-dev-001'));
     expect(json['field'], equals('history'));
     expect(json['count'], equals(2));
@@ -152,20 +149,4 @@ states:
       throwsA(isA<UsageException>()),
     );
   });
-}
-
-class _StringSink implements StreamConsumer<List<int>> {
-  final StringBuffer _buffer;
-  _StringSink(this._buffer);
-
-  @override
-  Future addStream(Stream<List<int>> stream) {
-    final completer = stream.listen((data) {
-      _buffer.write(utf8.decode(data));
-    });
-    return completer.asFuture();
-  }
-
-  @override
-  Future close() async {}
 }

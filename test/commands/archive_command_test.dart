@@ -5,6 +5,7 @@ import 'package:args/command_runner.dart';
 import 'package:test/test.dart';
 import 'package:tka/commands/archive_command.dart';
 import 'package:tka/models/ticket.dart';
+import '../test_helpers.dart';
 import 'package:tka/store/ticket_store.dart';
 
 Ticket _makeTicket(String project, int seq, String status) {
@@ -25,12 +26,12 @@ Ticket _makeTicket(String project, int seq, String status) {
 void main() {
   late Directory tmpDir;
   late TicketStore ticketStore;
-  late _TestSink out;
+  late TestSink out;
 
   setUp(() {
     tmpDir = Directory.systemTemp.createTempSync('archive_cmd_test_');
     ticketStore = TicketStore(tmpDir.path);
-    out = _TestSink();
+    out = TestSink();
   });
 
   tearDown(() {
@@ -102,19 +103,3 @@ void main() {
   });
 }
 
-class _TestSink implements IOSink {
-  final List<String> lines = [];
-
-  @override
-  void writeln([Object? object = '']) {
-    lines.add(object.toString());
-  }
-
-  @override
-  void write(Object? object) {
-    lines.add(object.toString());
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
-}

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -8,14 +7,14 @@ import 'package:tka/commands/update_command.dart';
 import 'package:tka/models/ticket.dart';
 import 'package:tka/store/project_store.dart';
 import 'package:tka/store/ticket_store.dart';
+import '../test_helpers.dart';
 
 void main() {
   late Directory tmpDir;
   late ProjectStore projectStore;
   late TicketStore ticketStore;
   late CommandRunner<void> runner;
-  late StringBuffer output;
-  late IOSink sink;
+  late TestSink out;
 
   setUp(() {
     tmpDir = Directory.systemTemp.createTempSync('update_cmd_test_');
@@ -55,25 +54,23 @@ states:
     );
     ticketStore.save(ticket);
 
-    output = StringBuffer();
-    sink = IOSink(_StringSink(output));
+    out = TestSink();
     runner = CommandRunner<void>('ticket', 'test')
       ..addCommand(UpdateCommand(
         projectStore: projectStore,
         ticketStore: ticketStore,
-        out: sink,
+        out: out,
       ));
   });
 
   tearDown(() {
-    sink.close();
     tmpDir.deleteSync(recursive: true);
   });
 
   test('updates title field with --set', () async {
     await runner
         .run(['update', 'test-project-001', '--set', 'title=New title']);
-    final json = jsonDecode(output.toString().trim()) as Map<String, dynamic>;
+    final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
     expect(json['id'], equals('test-project-001'));
     expect(json['updated_at'], isA<String>());
 
@@ -134,20 +131,4 @@ states:
     final json = loaded.toJson();
     expect(json['created_at'], equals('2026-04-01T10:00:00+09:00'));
   });
-}
-
-class _StringSink implements StreamConsumer<List<int>> {
-  final StringBuffer _buffer;
-  _StringSink(this._buffer);
-
-  @override
-  Future addStream(Stream<List<int>> stream) {
-    final completer = stream.listen((data) {
-      _buffer.write(utf8.decode(data));
-    });
-    return completer.asFuture();
-  }
-
-  @override
-  Future close() async {}
 }

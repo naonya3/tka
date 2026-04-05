@@ -5,6 +5,7 @@ import 'package:test/test.dart';
 import 'package:tka/commands/create_command.dart';
 import 'package:tka/store/project_store.dart';
 import 'package:tka/store/ticket_store.dart';
+import '../test_helpers.dart';
 
 void main() {
   late Directory tmpDir;
@@ -43,13 +44,12 @@ states:
   transitions:
     open: [done]
 ''');
-      final buf = StringBuffer();
-      final out = _StringSink(buf);
+      final out = TestSink();
       final runner = CommandRunner('tka', 'test')
         ..addCommand(CreateCommand(
             projectStore: projectStore, ticketStore: ticketStore, out: out));
       await runner.run(['create', 'todo', '--set', 'title=First task']);
-      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
       expect(json['id'], 'todo-001');
       expect(json['seq'], 1);
 
@@ -73,8 +73,7 @@ states:
   transitions:
     open: [done]
 ''');
-      final buf = StringBuffer();
-      final out = _StringSink(buf);
+      final out = TestSink();
       final runner = CommandRunner('tka', 'test')
         ..addCommand(CreateCommand(
             projectStore: projectStore, ticketStore: ticketStore, out: out));
@@ -85,10 +84,9 @@ states:
             projectStore: projectStore, ticketStore: ticketStore, out: out));
       await runner2.run(['create', 'todo', '--set', 'title=Second']);
 
-      final lines = buf.toString().trim().split('\n');
-      expect(lines.length, 2);
-      final json1 = jsonDecode(lines[0]) as Map<String, dynamic>;
-      final json2 = jsonDecode(lines[1]) as Map<String, dynamic>;
+      expect(out.lines.length, 2);
+      final json1 = jsonDecode(out.lines[0]) as Map<String, dynamic>;
+      final json2 = jsonDecode(out.lines[1]) as Map<String, dynamic>;
       expect(json1['id'], 'todo-001');
       expect(json1['seq'], 1);
       expect(json2['id'], 'todo-002');
@@ -107,8 +105,7 @@ states:
   transitions:
     open: [done]
 ''');
-      final buf = StringBuffer();
-      final out = _StringSink(buf);
+      final out = TestSink();
       final runner = CommandRunner('tka', 'test')
         ..addCommand(CreateCommand(
             projectStore: projectStore, ticketStore: ticketStore, out: out));
@@ -129,8 +126,7 @@ states:
   transitions:
     open: [done]
 ''');
-      final buf = StringBuffer();
-      final out = _StringSink(buf);
+      final out = TestSink();
       final runner = CommandRunner('tka', 'test')
         ..addCommand(CreateCommand(
             projectStore: projectStore, ticketStore: ticketStore, out: out));
@@ -140,8 +136,7 @@ states:
     });
 
     test('fails when project not found', () async {
-      final buf = StringBuffer();
-      final out = _StringSink(buf);
+      final out = TestSink();
       final runner = CommandRunner('tka', 'test')
         ..addCommand(CreateCommand(
             projectStore: projectStore, ticketStore: ticketStore, out: out));
@@ -151,8 +146,7 @@ states:
     });
 
     test('throws UsageException when no project name given', () async {
-      final buf = StringBuffer();
-      final out = _StringSink(buf);
+      final out = TestSink();
       final runner = CommandRunner('tka', 'test')
         ..addCommand(CreateCommand(
             projectStore: projectStore, ticketStore: ticketStore, out: out));
@@ -174,14 +168,13 @@ states:
   transitions:
     open: [done]
 ''');
-      final buf = StringBuffer();
-      final out = _StringSink(buf);
+      final out = TestSink();
       final runner = CommandRunner('tka', 'test')
         ..addCommand(CreateCommand(
             projectStore: projectStore, ticketStore: ticketStore, out: out));
       await runner.run(
           ['create', 'dated', '--set', 'title=Task', '--set', 'due=2026-04-10']);
-      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
       expect(json['id'], 'dated-001');
       expect(json['seq'], 1);
 
@@ -202,8 +195,7 @@ states:
   transitions:
     backlog: [done]
 ''');
-      final buf = StringBuffer();
-      final out = _StringSink(buf);
+      final out = TestSink();
       final runner = CommandRunner('tka', 'test')
         ..addCommand(CreateCommand(
             projectStore: projectStore, ticketStore: ticketStore, out: out));
@@ -214,44 +206,4 @@ states:
       expect(ticket.fields['history'], isEmpty);
     });
   });
-}
-
-class _StringSink implements IOSink {
-  final StringBuffer _buf;
-  _StringSink(this._buf);
-
-  @override
-  void writeln([Object? obj = '']) {
-    _buf.writeln(obj);
-  }
-
-  @override
-  void write(Object? obj) {
-    _buf.write(obj);
-  }
-
-  @override
-  void add(List<int> data) {}
-  @override
-  void addError(Object error, [StackTrace? stackTrace]) {}
-  @override
-  Future addStream(Stream<List<int>> stream) => Future.value();
-  @override
-  Future close() => Future.value();
-  @override
-  Future get done => Future.value();
-  @override
-  Future flush() => Future.value();
-  @override
-  Encoding get encoding => utf8;
-  @override
-  set encoding(Encoding value) {}
-  @override
-  void writeAll(Iterable objects, [String separator = '']) {
-    _buf.writeAll(objects, separator);
-  }
-  @override
-  void writeCharCode(int charCode) {
-    _buf.writeCharCode(charCode);
-  }
 }

@@ -7,6 +7,7 @@ import 'package:tka/commands/list_command.dart';
 import 'package:tka/models/ticket.dart';
 import 'package:tka/store/project_store.dart';
 import 'package:tka/store/ticket_store.dart';
+import '../test_helpers.dart';
 
 Ticket _makeTicket(String project, int seq, String status,
     {String? title,
@@ -49,7 +50,7 @@ void main() {
   late Directory tmpDir;
   late ProjectStore projectStore;
   late TicketStore ticketStore;
-  late _TestSink out;
+  late TestSink out;
 
   setUp(() {
     tmpDir = Directory.systemTemp.createTempSync('list_cmd_test_');
@@ -59,7 +60,7 @@ void main() {
     Directory(dataDir).createSync(recursive: true);
     projectStore = ProjectStore(projectsDir);
     ticketStore = TicketStore(dataDir);
-    out = _TestSink();
+    out = TestSink();
   });
 
   tearDown(() {
@@ -374,21 +375,4 @@ void main() {
       expect(result, isEmpty);
     });
   });
-}
-
-class _TestSink implements IOSink {
-  final List<String> lines = [];
-
-  @override
-  void writeln([Object? object = '']) {
-    lines.add(object.toString());
-  }
-
-  @override
-  void write(Object? object) {
-    lines.add(object.toString());
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => null;
 }

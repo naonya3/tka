@@ -185,6 +185,63 @@ void main() {
         expect(result['todo'], equals(['done']));
       });
 
+      test('getDescription returns description for map format', () {
+        final withDesc = StateMachine.fromYaml({
+          'initial': 'todo',
+          'transitions': {
+            'todo': {
+              'targets': ['implementing'],
+              'description': 'worktreeが作られるのでその中で作業開始',
+              'verify': {
+                'implementing': './scripts/setup-worktree.sh',
+              },
+            },
+            'implementing': ['testing'],
+          },
+        });
+        expect(withDesc.getDescription('todo'),
+            equals('worktreeが作られるのでその中で作業開始'));
+      });
+
+      test('getDescription returns null when not set', () {
+        expect(withVerify.getDescription('todo'), isNull);
+        expect(withVerify.getDescription('red'), isNull);
+      });
+
+      test('getDescription returns null for simple list format', () {
+        final simple = StateMachine.fromYaml({
+          'initial': 'todo',
+          'transitions': {
+            'todo': ['done'],
+          },
+        });
+        expect(simple.getDescription('todo'), isNull);
+      });
+
+      test('toTransitionsJson includes description when set', () {
+        final withDesc = StateMachine.fromYaml({
+          'initial': 'todo',
+          'transitions': {
+            'todo': {
+              'targets': ['implementing'],
+              'description': 'worktreeで作業開始',
+              'verify': {
+                'implementing': './scripts/setup.sh',
+              },
+            },
+            'implementing': ['done'],
+          },
+        });
+        final result = withDesc.toTransitionsJson();
+        expect(result['todo'], equals({
+          'targets': ['implementing'],
+          'description': 'worktreeで作業開始',
+          'verify': {'implementing': './scripts/setup.sh'},
+        }));
+        // Simple format unchanged
+        expect(result['implementing'], equals(['done']));
+      });
+
       test('verify only applies to specified target', () {
         final selective = StateMachine.fromYaml({
           'initial': 'red',

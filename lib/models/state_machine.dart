@@ -2,17 +2,21 @@ class StateMachine {
   final String initial;
   final Map<String, List<String>> transitions;
   final Map<String, String> _verifyCommands; // key: "from->to"
+  final Map<String, String> _descriptions; // key: source state
 
   StateMachine({
     required this.initial,
     required this.transitions,
     Map<String, String>? verifyCommands,
-  }) : _verifyCommands = verifyCommands ?? {};
+    Map<String, String>? descriptions,
+  })  : _verifyCommands = verifyCommands ?? {},
+        _descriptions = descriptions ?? {};
 
   factory StateMachine.fromYaml(Map data) {
     final transitionsRaw = data['transitions'] as Map;
     final transitions = <String, List<String>>{};
     final verifyCommands = <String, String>{};
+    final descriptions = <String, String>{};
 
     for (final entry in transitionsRaw.entries) {
       final from = entry.key as String;
@@ -22,7 +26,7 @@ class StateMachine {
         // Simple format: todo: [in_progress, done]
         transitions[from] = value.cast<String>().toList();
       } else if (value is Map) {
-        // Verify format: red: { targets: [green, todo], verify: { green: "dart test" } }
+        // Map format: red: { targets: [green], verify: { green: "dart test" }, description: "..." }
         final targets = (value['targets'] as List).cast<String>().toList();
         transitions[from] = targets;
         final verify = value['verify'];
@@ -30,6 +34,10 @@ class StateMachine {
           for (final vEntry in verify.entries) {
             verifyCommands['$from->${vEntry.key}'] = vEntry.value as String;
           }
+        }
+        final description = value['description'];
+        if (description is String) {
+          descriptions[from] = description;
         }
       } else {
         throw ArgumentError(
@@ -42,6 +50,7 @@ class StateMachine {
       initial: data['initial'] as String,
       transitions: transitions,
       verifyCommands: verifyCommands,
+      descriptions: descriptions,
     );
   }
 
@@ -64,6 +73,11 @@ class StateMachine {
     return _verifyCommands['$from->$to'];
   }
 
+  /// Returns the description for transitions from a state, or null if none.
+  String? getDescription(String from) {
+    return _descriptions[from];
+  }
+
   /// Returns transitions as JSON-friendly map, including verify info.
   ///
   /// States with verify commands are serialized as:
@@ -82,13 +96,14 @@ class StateMachine {
           verify[target] = cmd;
         }
       }
-      if (verify.isEmpty) {
+      final description = _descriptions[from];
+      if (verify.isEmpty && description == null) {
         result[from] = targets;
       } else {
-        result[from] = {
-          'targets': targets,
-          'verify': verify,
-        };
+        final map = <String, dynamic>{'targets': targets};
+        if (description != null) map['description'] = description;
+        if (verify.isNotEmpty) map['verify'] = verify;
+        result[from] = map;
       }
     }
     return result;

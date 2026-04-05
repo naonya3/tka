@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:test/test.dart';
 import 'package:tka/commands/show_command.dart';
+import 'package:tka/models/project_definition.dart';
 import 'package:tka/models/ticket.dart';
+import 'package:tka/store/project_store.dart';
 import 'package:tka/store/ticket_store.dart';
 
 Ticket _makeTicket(String project, int seq, String status,
@@ -95,6 +97,78 @@ void main() {
         () => makeRunner().run(['show', 'proj-999']),
         throwsException,
       );
+    });
+  });
+
+  group('show command with project store', () {
+    late Directory projectDir;
+
+    setUp(() {
+      projectDir = Directory('${tmpDir.path}/projects');
+      projectDir.createSync();
+    });
+
+    CommandRunner<void> makeRunnerWithProject() {
+      final projectStore = ProjectStore(projectDir.path);
+      final runner = CommandRunner<void>('ticket', 'test');
+      runner.addCommand(ShowCommand(
+        ticketStore: ticketStore,
+        projectStore: projectStore,
+        out: out,
+      ));
+      return runner;
+    }
+
+    test('available_transitions includes description as object array', () async {
+      File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
+version: 1
+name: myproj
+description: test project
+fields:
+  title:
+    type: string
+    required: true
+states:
+  initial: todo
+  transitions:
+    todo:
+      targets: [implementing]
+      description: "worktreeで作業開始"
+      verify:
+        implementing: "./scripts/setup.sh"
+    implementing: [done]
+''');
+      ticketStore.save(_makeTicket('myproj', 1, 'todo'));
+
+      await makeRunnerWithProject().run(['show', 'myproj-001']);
+      final result = parseOutput();
+      expect(result['available_transitions'], equals([
+        {'to': 'implementing', 'description': 'worktreeで作業開始'},
+      ]));
+    });
+
+    test('available_transitions omits description when not set', () async {
+      File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
+version: 1
+name: myproj
+description: test project
+fields:
+  title:
+    type: string
+    required: true
+states:
+  initial: todo
+  transitions:
+    todo: [implementing]
+    implementing: [done]
+''');
+      ticketStore.save(_makeTicket('myproj', 1, 'todo'));
+
+      await makeRunnerWithProject().run(['show', 'myproj-001']);
+      final result = parseOutput();
+      expect(result['available_transitions'], equals([
+        {'to': 'implementing'},
+      ]));
     });
   });
 }

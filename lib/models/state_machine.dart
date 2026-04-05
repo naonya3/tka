@@ -63,4 +63,34 @@ class StateMachine {
   String? getVerify(String from, String to) {
     return _verifyCommands['$from->$to'];
   }
+
+  /// Returns transitions as JSON-friendly map, including verify info.
+  ///
+  /// States with verify commands are serialized as:
+  ///   `{"targets": [...], "verify": {"target": "command"}}`
+  /// States without verify remain as simple lists: `[...]`
+  Map<String, dynamic> toTransitionsJson() {
+    final result = <String, dynamic>{};
+    for (final entry in transitions.entries) {
+      final from = entry.key;
+      final targets = entry.value;
+      // Collect verify commands for this source state
+      final verify = <String, String>{};
+      for (final target in targets) {
+        final cmd = _verifyCommands['$from->$target'];
+        if (cmd != null) {
+          verify[target] = cmd;
+        }
+      }
+      if (verify.isEmpty) {
+        result[from] = targets;
+      } else {
+        result[from] = {
+          'targets': targets,
+          'verify': verify,
+        };
+      }
+    }
+    return result;
+  }
 }

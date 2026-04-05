@@ -81,6 +81,39 @@ states:
       expect(json['states']['transitions']['doing'], ['done']);
     });
 
+    test('shows verify info in transitions JSON', () async {
+      writeProject('verify-show', '''
+version: 1
+name: verify-show
+description: Verify show test
+fields:
+  title: { type: string, required: true }
+states:
+  initial: todo
+  transitions:
+    todo: [implementing]
+    implementing:
+      targets: [testing]
+      verify:
+        testing: dart test
+    testing: [done]
+''');
+      final output = <String>[];
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'show', 'verify-show']);
+      expect(output.length, 1);
+      final json = jsonDecode(output[0]) as Map<String, dynamic>;
+      // Simple transitions remain as lists
+      expect(json['states']['transitions']['todo'], ['implementing']);
+      expect(json['states']['transitions']['testing'], ['done']);
+      // Verify transitions become maps
+      expect(json['states']['transitions']['implementing'], {
+        'targets': ['testing'],
+        'verify': {'testing': 'dart test'},
+      });
+    });
+
     test('throws when project not found', () async {
       final output = <String>[];
       final runner = CommandRunner('tka', 'test')

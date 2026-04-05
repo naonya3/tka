@@ -88,7 +88,7 @@ class _ProjectShowCommand extends Command {
       'fields': fieldsJson,
       'states': {
         'initial': project.stateMachine.initial,
-        'transitions': project.stateMachine.transitions,
+        'transitions': project.stateMachine.toTransitionsJson(),
       },
     };
     final pretty = argResults!['pretty'] as bool;

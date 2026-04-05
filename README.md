@@ -49,7 +49,7 @@ tka list -p <project> --where priority=p0 # Filter by field value
 tka list -p <project> --fields id,status,title  # Select output fields
 tka list -p <project> --sort -created_at --limit 5
 tka list -p <project> --archived          # List archived tickets
-tka show <id>                             # Full ticket JSON + available_transitions [{to, description?}]
+tka show <id>                             # Full ticket JSON + guide? + available_transitions [{to, hint?}]
 tka update <id> --set field=value
 tka transition <id> --to <status>
 tka append <id> --field history --value "Done"

@@ -45,11 +45,13 @@ Use --pretty for indented output.''';
     if (projectStore != null) {
       try {
         final def = projectStore!.load(ticket.project);
+        final guide = def.stateMachine.getGuide(ticket.status);
+        if (guide != null) json['guide'] = guide;
         final targets = def.stateMachine.getAvailableTransitions(ticket.status);
         json['available_transitions'] = targets.map((to) {
           final obj = <String, dynamic>{'to': to};
-          final desc = def.stateMachine.getDescription(ticket.status);
-          if (desc != null) obj['description'] = desc;
+          final hint = def.stateMachine.getHint(ticket.status, to);
+          if (hint != null) obj['hint'] = hint;
           return obj;
         }).toList();
       } catch (_) {

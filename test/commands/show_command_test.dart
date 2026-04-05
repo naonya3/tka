@@ -118,7 +118,7 @@ void main() {
       return runner;
     }
 
-    test('available_transitions includes description as object array', () async {
+    test('available_transitions includes hint per target', () async {
       File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
 version: 1
 name: myproj
@@ -132,7 +132,8 @@ states:
   transitions:
     todo:
       targets: [implementing]
-      description: "worktreeで作業開始"
+      hint:
+        implementing: "worktreeが自動作成される"
       verify:
         implementing: "./scripts/setup.sh"
     implementing: [done]
@@ -142,11 +143,11 @@ states:
       await makeRunnerWithProject().run(['show', 'myproj-001']);
       final result = parseOutput();
       expect(result['available_transitions'], equals([
-        {'to': 'implementing', 'description': 'worktreeで作業開始'},
+        {'to': 'implementing', 'hint': 'worktreeが自動作成される'},
       ]));
     });
 
-    test('available_transitions omits description when not set', () async {
+    test('available_transitions omits hint when not set', () async {
       File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
 version: 1
 name: myproj
@@ -168,6 +169,55 @@ states:
       expect(result['available_transitions'], equals([
         {'to': 'implementing'},
       ]));
+    });
+
+    test('guide is included in output when set', () async {
+      File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
+version: 1
+name: myproj
+description: test project
+fields:
+  title:
+    type: string
+    required: true
+states:
+  initial: todo
+  guide:
+    todo: "未着手。implementingに遷移して開始"
+    implementing: "worktree内でコードを書く"
+  transitions:
+    todo: [implementing]
+    implementing: [done]
+''');
+      ticketStore.save(_makeTicket('myproj', 1, 'todo'));
+
+      await makeRunnerWithProject().run(['show', 'myproj-001']);
+      final result = parseOutput();
+      expect(result['guide'], equals('未着手。implementingに遷移して開始'));
+    });
+
+    test('guide is omitted when not set for current status', () async {
+      File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
+version: 1
+name: myproj
+description: test project
+fields:
+  title:
+    type: string
+    required: true
+states:
+  initial: todo
+  guide:
+    implementing: "worktree内でコードを書く"
+  transitions:
+    todo: [implementing]
+    implementing: [done]
+''');
+      ticketStore.save(_makeTicket('myproj', 1, 'todo'));
+
+      await makeRunnerWithProject().run(['show', 'myproj-001']);
+      final result = parseOutput();
+      expect(result.containsKey('guide'), isFalse);
     });
   });
 }

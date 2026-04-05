@@ -185,13 +185,16 @@ void main() {
         expect(result['todo'], equals(['done']));
       });
 
-      test('getDescription returns description for map format', () {
-        final withDesc = StateMachine.fromYaml({
+      test('getHint returns hint for specific transition target', () {
+        final withHint = StateMachine.fromYaml({
           'initial': 'todo',
           'transitions': {
             'todo': {
-              'targets': ['implementing'],
-              'description': 'worktreeが作られるのでその中で作業開始',
+              'targets': ['implementing', 'cancelled'],
+              'hint': {
+                'implementing': 'worktreeが自動作成される',
+                'cancelled': 'チケットを破棄する',
+              },
               'verify': {
                 'implementing': './scripts/setup-worktree.sh',
               },
@@ -199,32 +202,69 @@ void main() {
             'implementing': ['testing'],
           },
         });
-        expect(withDesc.getDescription('todo'),
-            equals('worktreeが作られるのでその中で作業開始'));
+        expect(withHint.getHint('todo', 'implementing'),
+            equals('worktreeが自動作成される'));
+        expect(withHint.getHint('todo', 'cancelled'),
+            equals('チケットを破棄する'));
       });
 
-      test('getDescription returns null when not set', () {
-        expect(withVerify.getDescription('todo'), isNull);
-        expect(withVerify.getDescription('red'), isNull);
+      test('getHint returns null when not set', () {
+        expect(withVerify.getHint('todo', 'red'), isNull);
+        expect(withVerify.getHint('red', 'green'), isNull);
       });
 
-      test('getDescription returns null for simple list format', () {
+      test('getHint returns null for simple list format', () {
         final simple = StateMachine.fromYaml({
           'initial': 'todo',
           'transitions': {
             'todo': ['done'],
           },
         });
-        expect(simple.getDescription('todo'), isNull);
+        expect(simple.getHint('todo', 'done'), isNull);
       });
 
-      test('toTransitionsJson includes description when set', () {
-        final withDesc = StateMachine.fromYaml({
+      test('getGuide returns guide for state', () {
+        final withGuide = StateMachine.fromYaml({
+          'initial': 'todo',
+          'guide': {
+            'todo': '未着手。implementingに遷移して開始',
+            'implementing': 'worktree内でコードを書く',
+          },
+          'transitions': {
+            'todo': ['implementing'],
+            'implementing': ['done'],
+          },
+        });
+        expect(withGuide.getGuide('todo'),
+            equals('未着手。implementingに遷移して開始'));
+        expect(withGuide.getGuide('implementing'),
+            equals('worktree内でコードを書く'));
+      });
+
+      test('getGuide returns null when not set', () {
+        expect(withVerify.getGuide('todo'), isNull);
+        expect(withVerify.getGuide('red'), isNull);
+      });
+
+      test('getGuide returns null when guide section is absent', () {
+        final noGuide = StateMachine.fromYaml({
+          'initial': 'todo',
+          'transitions': {
+            'todo': ['done'],
+          },
+        });
+        expect(noGuide.getGuide('todo'), isNull);
+      });
+
+      test('toTransitionsJson includes hint when set', () {
+        final withHint = StateMachine.fromYaml({
           'initial': 'todo',
           'transitions': {
             'todo': {
               'targets': ['implementing'],
-              'description': 'worktreeで作業開始',
+              'hint': {
+                'implementing': 'worktreeが自動作成される',
+              },
               'verify': {
                 'implementing': './scripts/setup.sh',
               },
@@ -232,13 +272,12 @@ void main() {
             'implementing': ['done'],
           },
         });
-        final result = withDesc.toTransitionsJson();
+        final result = withHint.toTransitionsJson();
         expect(result['todo'], equals({
           'targets': ['implementing'],
-          'description': 'worktreeで作業開始',
+          'hint': {'implementing': 'worktreeが自動作成される'},
           'verify': {'implementing': './scripts/setup.sh'},
         }));
-        // Simple format unchanged
         expect(result['implementing'], equals(['done']));
       });
 

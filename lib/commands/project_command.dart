@@ -315,7 +315,8 @@ Use this to understand what JSON to pass to "tka project add --schema".''';
           'States that appear only as transition targets (not as keys) are terminal states.',
       'verify_note':
           'Transitions with "verify" run the command before transitioning. '
-          'If the command exits non-zero, the transition is blocked.',
+          'If the command exits non-zero, the transition is blocked. '
+          'To use verify as a hook (run without blocking), append "|| true" to the command.',
       'verify_env': {
         'TKA_TICKET_ID': 'Ticket ID (e.g. "myproj-003")',
         'TKA_TICKET_PROJECT': 'Project name',

@@ -31,6 +31,10 @@ Future<void> main(List<String> args) async {
     rest = args;
   }
 
+  final wantsHelp = rest.isEmpty ||
+      rest.contains('--help') ||
+      rest.contains('-h');
+
   if (rest.isNotEmpty && rest.first == 'init') {
     if (rest.contains('--help') || rest.contains('-h')) {
       stderr.writeln(InitCommand.usage);
@@ -49,6 +53,10 @@ Future<void> main(List<String> args) async {
   try {
     basePath = resolveBasePath(baseOption: baseOption);
   } on ResolveNotFound {
+    if (wantsHelp) {
+      stderr.writeln(_helpText);
+      return;
+    }
     if (baseOption == null) {
       stderr.writeln('.tka directory not found.');
       exit(1);
@@ -149,3 +157,26 @@ Long text: use pipe (--set field=-) or file (--set field=@path):
     exit(1);
   }
 }
+
+const _helpText = '''Ticket for Agents — schema-driven ticket management CLI.
+
+All output is machine-readable JSON on stdout. Errors go to stderr as JSON.
+No human-friendly formatting — designed to be consumed by AI agents directly.
+
+.tka resolution: --base <path> > TKA_BASE_PATH env > ./.tka > search parent directories.
+
+Commands:
+  init            Initialize .tka/ in current directory
+  project         Manage project definitions
+  create          Create a new ticket
+  list            List tickets
+  show            Show ticket details
+  update          Update ticket fields
+  transition      Transition ticket status
+  append          Append value to a list field
+  archive         Archive a ticket
+  watch           Real-time ticket dashboard
+  root            Print resolved .tka path
+
+Run "tka <command> --help" for more information about a command.
+Run "tka init" first to get started.''';

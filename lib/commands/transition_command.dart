@@ -19,7 +19,7 @@ Only transitions defined in the project state machine are allowed.
 If the transition has a "verify" command, it runs before transitioning.
 The transition is blocked if the command exits with non-zero.
 See "tka project schema" for verify definition and available environment variables.
-Output: {"id": "...", "from": "...", "to": "..."}''';
+Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
 
   final ProjectStore projectStore;
   final TicketStore ticketStore;

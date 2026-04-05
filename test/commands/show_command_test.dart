@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:test/test.dart';
 import 'package:tka/commands/show_command.dart';
-import 'package:tka/models/project_definition.dart';
 import 'package:tka/models/ticket.dart';
 import 'package:tka/store/project_store.dart';
 import 'package:tka/store/ticket_store.dart';

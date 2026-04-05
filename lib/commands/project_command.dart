@@ -245,8 +245,22 @@ Use "tka project schema" to see the full specification.''';
     buf.writeln('  transitions:');
     final transitions = states['transitions'] as Map;
     for (final entry in transitions.entries) {
-      final targets = (entry.value as List).map((v) => v.toString()).toList();
-      buf.writeln('    ${entry.key}: [${targets.join(', ')}]');
+      if (entry.value is List) {
+        final targets = (entry.value as List).map((v) => v.toString()).toList();
+        buf.writeln('    ${entry.key}: [${targets.join(', ')}]');
+      } else if (entry.value is Map) {
+        final map = entry.value as Map;
+        final targets = (map['targets'] as List).map((v) => v.toString()).toList();
+        buf.writeln('    ${entry.key}:');
+        buf.writeln('      targets: [${targets.join(', ')}]');
+        if (map['verify'] != null) {
+          buf.writeln('      verify:');
+          final verify = map['verify'] as Map;
+          for (final v in verify.entries) {
+            buf.writeln('        ${v.key}: ${_yamlStr(v.value.toString())}');
+          }
+        }
+      }
     }
     return buf.toString();
   }

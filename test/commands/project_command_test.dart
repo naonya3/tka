@@ -243,6 +243,34 @@ states:
       expect(def.description, 'Piped');
     });
 
+    test('creates project with verify transitions from JSON schema', () async {
+      final output = <String>[];
+      final schema = jsonEncode({
+        'fields': {
+          'title': {'type': 'string', 'required': true},
+        },
+        'states': {
+          'initial': 'todo',
+          'transitions': {
+            'todo': {
+              'targets': ['doing'],
+              'verify': {'doing': 'echo ok'},
+            },
+            'doing': ['done'],
+          },
+        },
+      });
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'add', 'verify-proj', '--schema', schema]);
+      final store = ProjectStore('$basePath/projects');
+      final def = store.load('verify-proj');
+      expect(def.stateMachine.initial, 'todo');
+      expect(def.stateMachine.getAvailableTransitions('todo'), ['doing']);
+      expect(def.stateMachine.getVerify('todo', 'doing'), 'echo ok');
+      expect(def.stateMachine.getAvailableTransitions('doing'), ['done']);
+    });
+
     test('rejects invalid JSON', () async {
       final output = <String>[];
       final runner = CommandRunner('tka', 'test')

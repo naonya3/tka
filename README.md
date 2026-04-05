@@ -174,6 +174,72 @@ Verify commands receive these environment variables:
 
 `TKA_BASE_PATH` is also used for `.tka` resolution: `--base` > `TKA_BASE_PATH` > `./.tka` > parent directory search. This means verify scripts that spawn sub-agents can pass the tka context through automatically.
 
+## Example: tka-dev — How tka Develops Itself
+
+tka uses itself for its own development. The `tka-dev` project is a real workflow that automates git worktree setup, testing, AI code review, and GitHub releases — all through verify scripts.
+
+### Project definition
+
+```yaml
+states:
+  initial: todo
+  transitions:
+    todo:
+      targets: [implementing]
+      verify:
+        implementing: "./scripts/setup-worktree.sh"
+    implementing: [testing]
+    testing:
+      targets: [done]
+      verify:
+        done: "./scripts/verify-done.sh"
+    done:
+      targets: [released]
+      verify:
+        released: "./scripts/release.sh"
+```
+
+### What each verify does
+
+**`setup-worktree.sh`** (todo → implementing)
+Creates a git worktree at `/tmp/<ticket-id>` so each ticket gets an isolated branch. The worktree path is saved to the ticket's `worktree` field.
+
+**`verify-done.sh`** (testing → done)
+Runs inside the worktree and checks:
+1. No uncommitted changes
+2. `pubspec.yaml` version bumped from main
+3. Valid semver format
+4. `dart test` passes
+5. `dart analyze --fatal-infos` passes
+6. AI code review via `claude -p` (independent context, no self-evaluation bias)
+
+**`release.sh`** (done → released)
+Merges the ticket branch into main, pushes a version tag, and cleans up the worktree. GitHub Actions picks up the tag and creates a release with cross-platform binaries.
+
+### Full lifecycle
+
+```bash
+tka create tka-dev --set title="Fix parsing bug"
+# → tka-dev-005 created
+
+tka transition tka-dev-005 --to implementing
+# → setup-worktree.sh creates /tmp/tka-dev-005 branch
+# → Agent works in the worktree
+
+tka transition tka-dev-005 --to testing
+# → Agent considers the implementation complete
+
+tka transition tka-dev-005 --to done
+# → verify-done.sh runs tests, analyze, AI review
+# → Blocked if anything fails — agent reads error and self-corrects
+
+tka transition tka-dev-005 --to released
+# → release.sh merges to main, pushes tag
+# → CI builds binaries, creates GitHub release
+```
+
+The agent never skips a step. Verify gates enforce quality without human oversight.
+
 ## Schema Definition
 
 Projects are defined by fields and a state machine. Use `tka project schema` to get the full spec, then pass JSON to `--schema`:

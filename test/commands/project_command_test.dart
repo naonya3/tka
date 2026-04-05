@@ -483,6 +483,90 @@ states:
       );
     });
   });
+  group('project workflow', () {
+    test('returns workflow with guides, hints, and verify flags', () async {
+      writeProject('wf', '''
+version: 1
+name: wf
+description: workflow test
+fields:
+  title: { type: string, required: true }
+states:
+  initial: todo
+  guide:
+    todo: 'Read the ticket and start'
+    implementing: 'Write code in worktree'
+    done: 'All verified'
+  transitions:
+    todo:
+      targets: [implementing]
+      hint:
+        implementing: 'Worktree will be created'
+      verify:
+        implementing: './scripts/setup.sh'
+    implementing: [done]
+''');
+      final output = <String>[];
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'workflow', 'wf']);
+
+      final json = jsonDecode(output[0]) as Map<String, dynamic>;
+      expect(json['project'], equals('wf'));
+      expect(json['initial'], equals('todo'));
+
+      final states = json['states'] as Map<String, dynamic>;
+
+      // todo state
+      final todo = states['todo'] as Map<String, dynamic>;
+      expect(todo['guide'], equals('Read the ticket and start'));
+      final todoTransitions = todo['transitions'] as List;
+      expect(todoTransitions.length, 1);
+      final t0 = todoTransitions[0] as Map<String, dynamic>;
+      expect(t0['to'], equals('implementing'));
+      expect(t0['hint'], equals('Worktree will be created'));
+      expect(t0['verify'], isTrue);
+
+      // implementing state
+      final impl = states['implementing'] as Map<String, dynamic>;
+      expect(impl['guide'], equals('Write code in worktree'));
+      final implTransitions = impl['transitions'] as List;
+      expect(implTransitions.length, 1);
+      expect((implTransitions[0] as Map)['to'], equals('done'));
+
+      // done state (terminal)
+      final done = states['done'] as Map<String, dynamic>;
+      expect(done['guide'], equals('All verified'));
+      expect(done.containsKey('transitions'), isFalse);
+    });
+
+    test('works with simple project without guides', () async {
+      writeProject('simple', _simpleProject('simple'));
+      final output = <String>[];
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'workflow', 'simple']);
+
+      final json = jsonDecode(output[0]) as Map<String, dynamic>;
+      expect(json['project'], equals('simple'));
+      expect(json['initial'], equals('todo'));
+
+      final states = json['states'] as Map<String, dynamic>;
+      final todo = states['todo'] as Map<String, dynamic>;
+      expect(todo.containsKey('guide'), isFalse);
+      expect((todo['transitions'] as List).length, 1);
+    });
+
+    test('throws when no project name provided', () async {
+      final output = <String>[];
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      expect(
+        () => runner.run(['project', 'workflow']),
+        throwsA(isA<UsageException>()),
+      );
+    });
+  });
 }
 
 String _simpleProject(String name) => '''

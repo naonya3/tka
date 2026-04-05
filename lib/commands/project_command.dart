@@ -21,6 +21,7 @@ class ProjectCommand extends Command {
     addSubcommand(_ProjectTemplatesCommand(p));
     addSubcommand(_ProjectAddCommand(store, '$basePath/projects', p, stdinStream: stdinStream));
     addSubcommand(_ProjectSchemaCommand(p));
+    addSubcommand(_ProjectWorkflowCommand(store, p));
     addSubcommand(_ProjectArchiveCommand(store, p));
     addSubcommand(_ProjectUnarchiveCommand(store, p));
   }
@@ -343,6 +344,70 @@ To edit an existing project, modify the YAML file at: \$(tka root)/projects/<nam
       },
     };
     _printer(jsonEncode(schema));
+  }
+}
+
+class _ProjectWorkflowCommand extends Command {
+  @override
+  final String name = 'workflow';
+  @override
+  final String description = '''Show project workflow (state machine with guides).
+
+Usage: tka project workflow <name>
+Output: JSON object with initial state, all states with guides and transitions.
+Use this to understand the project workflow before starting work.''';
+
+  final ProjectStore _store;
+  final void Function(String) _printer;
+
+  _ProjectWorkflowCommand(this._store, this._printer);
+
+  @override
+  void run() {
+    if (argResults!.rest.isEmpty) {
+      throw UsageException('Project name is required.', usage);
+    }
+    final name = argResults!.rest.first;
+    final project = _store.load(name);
+    final sm = project.stateMachine;
+
+    // Collect all states (both source and target)
+    final allStates = <String>{};
+    allStates.add(sm.initial);
+    for (final entry in sm.transitions.entries) {
+      allStates.add(entry.key);
+      allStates.addAll(entry.value);
+    }
+
+    final statesJson = <String, dynamic>{};
+    for (final state in allStates) {
+      final stateMap = <String, dynamic>{};
+      final guide = sm.getGuide(state);
+      if (guide != null) stateMap['guide'] = guide;
+
+      final targets = sm.getAvailableTransitions(state);
+      if (targets.isNotEmpty) {
+        final transitionsList = <Map<String, dynamic>>[];
+        for (final target in targets) {
+          final t = <String, dynamic>{'to': target};
+          final hint = sm.getHint(state, target);
+          if (hint != null) t['hint'] = hint;
+          final verify = sm.getVerify(state, target);
+          if (verify != null) t['verify'] = true;
+          transitionsList.add(t);
+        }
+        stateMap['transitions'] = transitionsList;
+      }
+
+      statesJson[state] = stateMap;
+    }
+
+    final json = {
+      'project': project.name,
+      'initial': sm.initial,
+      'states': statesJson,
+    };
+    _printer(jsonEncode(json));
   }
 }
 

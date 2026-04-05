@@ -33,6 +33,7 @@ tka project add my-tasks --template tdd
 # --- Project management ---
 tka project list                          # ["my-tasks", "bugs"]
 tka project show <name>                   # Full definition as JSON
+tka project workflow <name>               # State machine with guides, hints, verify flags
 tka project schema                        # Schema spec for --schema input
 tka project add <name> --template <tpl>   # Create from template
 tka project add <name> --schema '<json>'  # Create from JSON

@@ -6,3 +6,7 @@ build/
 
 # Ticket data (project definitions are tracked)
 .tka/data/
+
+# Project definitions (only tka-dev is tracked)
+.tka/projects/*
+!.tka/projects/tka-dev.yaml

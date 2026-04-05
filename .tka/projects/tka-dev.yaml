@@ -2,23 +2,34 @@ version: 1
 name: tka-dev
 description: tka development
 fields:
-  title:    { type: string, required: true }
-  detail:   { type: string }
+  title: { type: string, required: true }
+  detail: { type: string }
   worktree: { type: string }
-  history:  { type: list }
+  history: { type: list }
 states:
   initial: todo
+  guide:
+    todo: '未着手のチケット。内容を確認してimplementingに遷移して作業開始'
+    implementing: 'worktree内でTDD（Red→Green→Refactor）でコードを書く。完了したらtestingへ'
+    testing: 'doneへ遷移するとverify-done.shが自動実行される。失敗したら修正してリトライ'
+    done: '検証済み。releasedに遷移するとmainへマージされる'
   transitions:
     todo:
       targets: [implementing]
+      hint:
+        implementing: 'setup-worktree.shが走り/tmp/<ticket-id>にworktreeが作られる'
       verify:
-        implementing: "./scripts/setup-worktree.sh"
+        implementing: './scripts/setup-worktree.sh'
     implementing: [testing]
     testing:
       targets: [done]
+      hint:
+        done: 'uncommitted changes無し・dart test・dart analyze・AIレビュー全パスが必要'
       verify:
-        done: "./scripts/verify-done.sh"
+        done: './scripts/verify-done.sh'
     done:
       targets: [released]
+      hint:
+        released: 'mainへマージ、worktree削除、make && make installが実行される'
       verify:
-        released: "./scripts/release.sh"
+        released: './scripts/release.sh'

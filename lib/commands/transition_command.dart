@@ -82,7 +82,7 @@ Output: {"id": "...", "from": "...", "to": "..."}''';
         throw Exception(jsonEncode({
           'error': 'Verify failed for transition ${ticket.status} → $targetStatus. '
               'Command: $verifyCmd (exit code ${result.exitCode}).',
-          if (verifyOutput != null) 'output': verifyOutput,
+          'output': ?verifyOutput,
         }));
       }
     }

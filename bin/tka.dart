@@ -18,7 +18,7 @@ import 'package:tka/store/project_store.dart';
 import 'package:tka/store/ticket_store.dart';
 
 Future<void> main(List<String> args) async {
-  final globalParser = ArgParser()
+  final globalParser = ArgParser(allowTrailingOptions: false)
     ..addOption('base', help: 'Path to .tka directory');
 
   String? baseOption;

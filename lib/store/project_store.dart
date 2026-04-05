@@ -44,9 +44,7 @@ class ProjectStore {
     final archiveDir = Directory(p.join(basePath, 'archived'));
     if (!archiveDir.existsSync()) archiveDir.createSync();
     final dest = File(p.join(archiveDir.path, '$name.yaml'));
-    if (dest.existsSync()) {
-      throw Exception('Archived project already exists: $name');
-    }
+    if (dest.existsSync()) dest.deleteSync();
     file.renameSync(dest.path);
   }
 

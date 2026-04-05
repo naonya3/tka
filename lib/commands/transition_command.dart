@@ -62,7 +62,7 @@ Output: {"id": "...", "from": "...", "to": "..."}''';
         'TKA_TICKET_SEQ': ticket.seq.toString(),
         'TKA_TICKET_STATUS': ticket.status,
         'TKA_TRANSITION_TO': targetStatus,
-        if (basePath != null) 'TKA_BASE_PATH': basePath!, // ignore: use_null_aware_elements
+        'TKA_BASE_PATH': ?basePath,
       };
       final workDir = basePath != null ? p.dirname(basePath!) : null;
       final result = Platform.isWindows

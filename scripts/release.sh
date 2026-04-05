@@ -2,12 +2,14 @@
 TICKET_JSON=$(tka --base "$TKA_BASE_PATH" show "$TKA_TICKET_ID")
 WORKTREE=$(echo "$TICKET_JSON" | jq -r '.fields.worktree')
 TITLE=$(echo "$TICKET_JSON" | jq -r '.fields.title')
-cd "$WORKTREE" || { echo "Worktree not found: $WORKTREE" >&2; exit 1; }
 
-VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
+# Repo root is parent of .tka directory
+REPO_ROOT=$(dirname "$TKA_BASE_PATH")
 
-# merge & push
-git checkout main || { echo "Failed to checkout main" >&2; exit 1; }
+VERSION=$(cd "$WORKTREE" && grep '^version:' pubspec.yaml | awk '{print $2}')
+
+# merge & push from repo root (main is checked out there)
+cd "$REPO_ROOT" || { echo "Repo root not found: $REPO_ROOT" >&2; exit 1; }
 git merge "$TKA_TICKET_ID" || { echo "Merge failed" >&2; exit 1; }
 git push || { echo "Push failed" >&2; exit 1; }
 

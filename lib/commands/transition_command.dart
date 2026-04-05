@@ -113,6 +113,10 @@ Output: {"id": "...", "from": "...", "to": "..."}''';
     if (verifyOutput != null) {
       resultJson['output'] = verifyOutput;
     }
+    final guide = projectDef.stateMachine.getGuide(targetStatus);
+    if (guide != null) {
+      resultJson['guide'] = guide;
+    }
     _out.writeln(jsonEncode(resultJson));
   }
 }

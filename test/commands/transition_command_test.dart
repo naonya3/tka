@@ -593,6 +593,38 @@ states:
     });
   });
 
+  test('includes guide in result when target state has guide', () async {
+    // Replace project with one that has guides
+    final projectsDir = Directory('${tmpDir.path}/projects');
+    File('${projectsDir.path}/game-dev.yaml').writeAsStringSync('''
+version: 1
+name: game-dev
+description: test
+fields:
+  title: { type: string, required: true }
+states:
+  initial: backlog
+  transitions:
+    backlog: [in_progress]
+    in_progress: [review, blocked]
+    blocked: [in_progress]
+    review: [done, in_progress]
+  guide:
+    in_progress: 'Start working on the task'
+    review: 'Review the implementation'
+''');
+
+    await runner.run(['transition', 'game-dev-001', '--to', 'in_progress']);
+    final json = jsonDecode(output.toString().trim()) as Map<String, dynamic>;
+    expect(json['guide'], equals('Start working on the task'));
+  });
+
+  test('no guide field when target state has no guide', () async {
+    await runner.run(['transition', 'game-dev-001', '--to', 'in_progress']);
+    final json = jsonDecode(output.toString().trim()) as Map<String, dynamic>;
+    expect(json.containsKey('guide'), isFalse);
+  });
+
   test('updates updatedAt on transition', () async {
     await runner.run(['transition', 'game-dev-001', '--to', 'in_progress']);
     final loaded = ticketStore.load('game-dev', 1);

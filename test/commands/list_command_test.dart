@@ -318,6 +318,41 @@ void main() {
       );
     });
 
+    test('--where rejects unknown custom field', () async {
+      _writeProjectYaml('${tmpDir.path}/projects', 'proj',
+          extraFields: '  priority: { type: string }');
+      ticketStore.save(_makeTicket('proj', 1, 'todo',
+          title: 'T1', extraFields: {'priority': 'p0'}));
+
+      expect(
+        () => makeRunner().run(['list', '-p', 'proj', '--where', 'nonexistent=foo']),
+        throwsA(isA<Exception>().having(
+            (e) => e.toString(), 'message', contains('Unknown field in --where: nonexistent'))),
+      );
+    });
+
+    test('--sort rejects unknown field', () async {
+      _writeProjectYaml('${tmpDir.path}/projects', 'proj');
+      ticketStore.save(_makeTicket('proj', 1, 'todo'));
+
+      expect(
+        () => makeRunner().run(['list', '-p', 'proj', '--sort', 'nonexistent']),
+        throwsA(isA<Exception>().having(
+            (e) => e.toString(), 'message', contains('Unknown sort key: nonexistent'))),
+      );
+    });
+
+    test('--sort rejects unknown field with descending prefix', () async {
+      _writeProjectYaml('${tmpDir.path}/projects', 'proj');
+      ticketStore.save(_makeTicket('proj', 1, 'todo'));
+
+      expect(
+        () => makeRunner().run(['list', '-p', 'proj', '--sort', '-nonexistent']),
+        throwsA(isA<Exception>().having(
+            (e) => e.toString(), 'message', contains('Unknown sort key: nonexistent'))),
+      );
+    });
+
     test('--archived lists archived tickets', () async {
       _writeProjectYaml('${tmpDir.path}/projects', 'proj');
       ticketStore.save(_makeTicket('proj', 1, 'done', title: 'Archived1'));

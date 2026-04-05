@@ -53,6 +53,41 @@ void main() {
       expect(def.stateMachine.isTerminal('done'), true);
     });
 
+    test('missing fields throws user-friendly error', () {
+      expect(
+        () => ProjectDefinition.fromYaml({'version': 1, 'name': 'x', 'states': {'initial': 'todo', 'transitions': {'todo': ['done']}}}),
+        throwsA(predicate((e) => e is ArgumentError && e.message.contains('"fields" is required'))),
+      );
+    });
+
+    test('missing states throws user-friendly error', () {
+      expect(
+        () => ProjectDefinition.fromYaml({'version': 1, 'name': 'x', 'fields': {'title': {'type': 'string'}}}),
+        throwsA(predicate((e) => e is ArgumentError && e.message.contains('"states" is required'))),
+      );
+    });
+
+    test('missing states.initial throws user-friendly error', () {
+      expect(
+        () => ProjectDefinition.fromYaml({'version': 1, 'name': 'x', 'fields': {'title': {'type': 'string'}}, 'states': {'transitions': {'todo': ['done']}}}),
+        throwsA(predicate((e) => e is ArgumentError && e.message.contains('"states.initial" is required'))),
+      );
+    });
+
+    test('missing states.transitions throws user-friendly error', () {
+      expect(
+        () => ProjectDefinition.fromYaml({'version': 1, 'name': 'x', 'fields': {'title': {'type': 'string'}}, 'states': {'initial': 'todo'}}),
+        throwsA(predicate((e) => e is ArgumentError && e.message.contains('"states.transitions" is required'))),
+      );
+    });
+
+    test('empty schema throws user-friendly error', () {
+      expect(
+        () => ProjectDefinition.fromYaml({'version': 1, 'name': 'x'}),
+        throwsA(predicate((e) => e is ArgumentError && e.message.contains('"fields" is required'))),
+      );
+    });
+
     test('minimal definition works', () {
       final minimal = {
         'version': 1,

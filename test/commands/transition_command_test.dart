@@ -457,6 +457,113 @@ states:
       projectRoot.deleteSync(recursive: true);
     });
 
+    test('verify output included in success result', () async {
+      File('${verifyTmpDir.path}/projects/echo-proj.yaml').writeAsStringSync('''
+version: 1
+name: echo-proj
+description: test
+fields:
+  title: { type: string, required: true }
+states:
+  initial: todo
+  transitions:
+    todo:
+      targets: [done]
+      verify:
+        done: "echo 'worktree created at /tmp/wt'"
+''');
+
+      final ticket = Ticket(
+        project: 'echo-proj',
+        seq: 1,
+        status: 'todo',
+        fields: {'title': 'Test'},
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      verifyTicketStore.save(ticket);
+
+      final buf = StringBuffer();
+      final s = IOSink(_StringSink(buf));
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: verifyProjectStore,
+          ticketStore: verifyTicketStore,
+          out: s,
+        ));
+      await r.run(['transition', 'echo-proj-001', '--to', 'done']);
+      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      expect(json['to'], equals('done'));
+      expect(json['output'], equals('worktree created at /tmp/wt'));
+      s.close();
+    });
+
+    test('verify output included in failure error', () async {
+      File('${verifyTmpDir.path}/projects/failout.yaml').writeAsStringSync('''
+version: 1
+name: failout
+description: test
+fields:
+  title: { type: string, required: true }
+states:
+  initial: todo
+  transitions:
+    todo:
+      targets: [done]
+      verify:
+        done: "echo '3 tests failed' && exit 1"
+''');
+
+      final ticket = Ticket(
+        project: 'failout',
+        seq: 1,
+        status: 'todo',
+        fields: {'title': 'Test'},
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      verifyTicketStore.save(ticket);
+
+      final buf = StringBuffer();
+      final s = IOSink(_StringSink(buf));
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: verifyProjectStore,
+          ticketStore: verifyTicketStore,
+          out: s,
+        ));
+
+      expect(
+        () => r.run(['transition', 'failout-001', '--to', 'done']),
+        throwsA(isA<Exception>().having(
+            (e) => e.toString(), 'message', allOf(
+              contains('Verify failed'),
+              contains('3 tests failed'),
+            ))),
+      );
+      s.close();
+    });
+
+    test('no output field when verify produces no output', () async {
+      final buf = StringBuffer();
+      final s = IOSink(_StringSink(buf));
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: verifyProjectStore,
+          ticketStore: verifyTicketStore,
+          out: s,
+        ));
+      await r.run(['transition', 'tdd-001', '--to', 'green']);
+      final json = jsonDecode(buf.toString().trim()) as Map<String, dynamic>;
+      expect(json['to'], equals('green'));
+      expect(json.containsKey('output'), isFalse);
+      s.close();
+    });
+
     test('transition without verify proceeds normally', () async {
       // First transition to red (no verify on todo->red)
       final ticket0 = Ticket(

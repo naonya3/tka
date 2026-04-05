@@ -17,10 +17,35 @@ class ProjectDefinition {
   });
 
   factory ProjectDefinition.fromYaml(Map data) {
+    if (data['fields'] == null) {
+      throw ArgumentError('Schema error: "fields" is required.');
+    }
+    if (data['fields'] is! Map) {
+      throw ArgumentError('Schema error: "fields" must be a map.');
+    }
+    if (data['states'] == null) {
+      throw ArgumentError('Schema error: "states" is required.');
+    }
+    if (data['states'] is! Map) {
+      throw ArgumentError('Schema error: "states" must be a map.');
+    }
+    final statesRaw = data['states'] as Map;
+    if (statesRaw['initial'] == null) {
+      throw ArgumentError('Schema error: "states.initial" is required.');
+    }
+    if (statesRaw['transitions'] == null) {
+      throw ArgumentError('Schema error: "states.transitions" is required.');
+    }
+    if (statesRaw['transitions'] is! Map) {
+      throw ArgumentError('Schema error: "states.transitions" must be a map.');
+    }
     final fieldsRaw = data['fields'] as Map;
     final fields = <String, FieldDefinition>{};
     for (final entry in fieldsRaw.entries) {
       final name = entry.key as String;
+      if (entry.value is! Map) {
+        throw ArgumentError('Schema error: field "$name" must be a map with at least a "type" property.');
+      }
       fields[name] = FieldDefinition.fromYaml(name, entry.value as Map);
     }
     return ProjectDefinition(

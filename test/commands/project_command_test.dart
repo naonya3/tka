@@ -215,6 +215,15 @@ states:
       expect(fieldTypes.keys, containsAll(['string', 'number', 'date', 'list', 'enum']));
       expect(fieldTypes['enum']['required_properties'], contains('values'));
     });
+
+    test('includes verify_cwd in schema output', () async {
+      final output = <String>[];
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'schema']);
+      final json = jsonDecode(output[0]) as Map<String, dynamic>;
+      expect(json['verify_cwd'], equals('Repository root (parent of .tka directory)'));
+    });
   });
 
   group('project add --schema', () {

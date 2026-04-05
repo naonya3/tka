@@ -80,7 +80,8 @@ class StateMachine {
   }
 
   bool isTerminal(String state) {
-    return !transitions.containsKey(state);
+    final targets = transitions[state];
+    return targets == null || targets.isEmpty;
   }
 
   /// Returns the verify command for a transition, or null if none.

@@ -16,6 +16,7 @@ import '../models/field_definition.dart';
 dynamic coerceValue(String raw, FieldDefinition def) {
   switch (def.type) {
     case FieldType.number:
+      if (raw.isEmpty) return '';
       final n = num.tryParse(raw);
       if (n == null || n.isNaN || n.isInfinite) {
         throw FormatException('Invalid number: $raw');

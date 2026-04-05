@@ -53,6 +53,7 @@ Output: {"id": "...", "from": "...", "to": "..."}''';
       throw Exception(error);
     }
 
+    String? verifyOutput;
     final verifyCmd =
         projectDef.stateMachine.getVerify(ticket.status, targetStatus);
     if (verifyCmd != null) {
@@ -70,14 +71,19 @@ Output: {"id": "...", "from": "...", "to": "..."}''';
               environment: env, workingDirectory: workDir)
           : Process.runSync('sh', ['-c', verifyCmd],
               environment: env, workingDirectory: workDir);
+      final combinedOutput = [
+        (result.stdout as String).trim(),
+        (result.stderr as String).trim(),
+      ].where((s) => s.isNotEmpty).join('\n');
+      if (combinedOutput.isNotEmpty) {
+        verifyOutput = combinedOutput;
+      }
       if (result.exitCode != 0) {
-        final output = (result.stderr as String).isNotEmpty
-            ? result.stderr as String
-            : result.stdout as String;
-        throw Exception(
-            'Verify failed for transition ${ticket.status} → $targetStatus. '
-            'Command: $verifyCmd (exit code ${result.exitCode}). '
-            'Output: ${output.toString().trim()}');
+        throw Exception(jsonEncode({
+          'error': 'Verify failed for transition ${ticket.status} → $targetStatus. '
+              'Command: $verifyCmd (exit code ${result.exitCode}).',
+          if (verifyOutput != null) 'output': verifyOutput,
+        }));
       }
     }
 
@@ -99,10 +105,14 @@ Output: {"id": "...", "from": "...", "to": "..."}''';
 
     ticketStore.save(updated,
         expectedUpdatedAt: currentJson['updated_at'] as String);
-    _out.writeln(jsonEncode({
+    final resultJson = <String, dynamic>{
       'id': ticket.id,
       'from': ticket.status,
       'to': targetStatus,
-    }));
+    };
+    if (verifyOutput != null) {
+      resultJson['output'] = verifyOutput;
+    }
+    _out.writeln(jsonEncode(resultJson));
   }
 }

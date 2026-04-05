@@ -66,7 +66,27 @@ Examples:
       }
     }
 
+    final projectDef = projectStore.load(projectName);
+    final customFields = projectDef.fields.keys.toSet();
+
+    for (final (field, _) in wherePairs) {
+      if (!metaHints.containsKey(field) && !customFields.contains(field)) {
+        final available = customFields.toList()..sort();
+        throw Exception(
+            'Unknown field in --where: $field. Available: ${available.join(', ')}');
+      }
+    }
+
     final sortKey = argResults!['sort'] as String?;
+    if (sortKey != null) {
+      final rawKey = sortKey.startsWith('-') ? sortKey.substring(1) : sortKey;
+      const builtInSortFields = {'id', 'seq', 'status', 'created_at', 'updated_at'};
+      if (!builtInSortFields.contains(rawKey) && !customFields.contains(rawKey)) {
+        final available = [...builtInSortFields, ...customFields]..sort();
+        throw Exception(
+            'Unknown sort key: $rawKey. Available: ${available.join(', ')}');
+      }
+    }
     final limitStr = argResults!['limit'] as String?;
     final offsetStr = argResults!['offset'] as String?;
 
@@ -85,7 +105,6 @@ Examples:
       }
     }
 
-    final projectDef = projectStore.load(projectName);
     final sm = projectDef.stateMachine;
 
     if (statusFilter != null) {
@@ -164,7 +183,6 @@ Examples:
     }
 
     const builtInFields = {'id', 'seq', 'project', 'status', 'created_at', 'updated_at'};
-    final customFields = projectDef.fields.keys.toSet();
     final unknown = outputFields
         .where((f) => !builtInFields.contains(f) && !customFields.contains(f))
         .toList();

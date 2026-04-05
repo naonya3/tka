@@ -38,4 +38,17 @@ void main() {
     expect(result, contains('review'));
     expect(result, contains('blocked'));
   });
+
+  test('transition from state with empty transitions array shows terminal message', () {
+    final smWithEmpty = StateMachine(
+      initial: 'open',
+      transitions: {
+        'open': ['closed', 'cancelled'],
+        'cancelled': [],
+      },
+    );
+    final result = TransitionValidator.validate(smWithEmpty, 'cancelled', 'open');
+    expect(result, isNotNull);
+    expect(result, contains('terminal state'));
+  });
 }

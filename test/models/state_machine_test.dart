@@ -86,6 +86,19 @@ void main() {
       expect(gameDev.isTerminal('blocked'), isFalse);
     });
 
+    test('isTerminal returns true for states with empty transitions array', () {
+      final sm = StateMachine(
+        initial: 'open',
+        transitions: {
+          'open': ['closed', 'cancelled'],
+          'cancelled': [],
+        },
+      );
+      expect(sm.isTerminal('cancelled'), isTrue);
+      expect(sm.isTerminal('closed'), isTrue);
+      expect(sm.isTerminal('open'), isFalse);
+    });
+
     test('initial state is set correctly', () {
       expect(gameDev.initial, equals('backlog'));
       expect(simpleTodo.initial, equals('todo'));

@@ -121,6 +121,11 @@ void main() {
       final def = FieldDefinition(name: 'priority', type: FieldType.enumType, required: false, values: ['p0', 'p1']);
       expect(coerceValue('p0', def), equals('p0'));
     });
+
+    test('returns empty string for empty number input (clear)', () {
+      final def = FieldDefinition(name: 'qty', type: FieldType.number, required: false);
+      expect(coerceValue('', def), equals(''));
+    });
   });
 
   group('buildFieldsFromSetOptions', () {

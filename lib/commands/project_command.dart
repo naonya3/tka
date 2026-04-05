@@ -332,6 +332,7 @@ To edit an existing project, modify the YAML file at: \$(tka root)/projects/<nam
           'Transitions with "verify" run the command before transitioning. '
           'If the command exits non-zero, the transition is blocked. '
           'To use verify as a hook (run without blocking), append "|| true" to the command.',
+      'verify_cwd': 'Repository root (parent of .tka directory)',
       'verify_env': {
         'TKA_TICKET_ID': 'Ticket ID (e.g. "myproj-003")',
         'TKA_TICKET_PROJECT': 'Project name',

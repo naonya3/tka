@@ -33,7 +33,7 @@ tka project add my-tasks --template tdd
 # --- Project management ---
 tka project list                          # ["my-tasks", "bugs"]
 tka project show <name>                   # Full definition as JSON
-tka project workflow <name>               # State machine with guides, hints, verify flags
+tka project workflow <name>               # State machine with guides and transitions
 tka project schema                        # Schema spec for --schema input
 tka project add <name> --template <tpl>   # Create from template
 tka project add <name> --schema '<json>'  # Create from JSON
@@ -50,7 +50,7 @@ tka list -p <project> --where priority=p0 # Filter by field value
 tka list -p <project> --fields id,status,title  # Select output fields
 tka list -p <project> --sort -created_at --limit 5
 tka list -p <project> --archived          # List archived tickets
-tka show <id>                             # Full ticket JSON + guide? + available_transitions [{to, hint?}]
+tka show <id>                             # Full ticket JSON + guide? + available_transitions
 tka update <id> --set field=value
 tka transition <id> --to <status>         # Result JSON includes guide? for target state
 tka append <id> --field history --value "Done"

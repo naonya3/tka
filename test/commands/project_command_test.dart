@@ -484,7 +484,7 @@ states:
     });
   });
   group('project workflow', () {
-    test('returns workflow with guides, hints, and verify flags', () async {
+    test('returns workflow with guides and transitions', () async {
       writeProject('wf', '''
 version: 1
 name: wf
@@ -500,8 +500,6 @@ states:
   transitions:
     todo:
       targets: [implementing]
-      hint:
-        implementing: 'Worktree will be created'
       verify:
         implementing: './scripts/setup.sh'
     implementing: [done]

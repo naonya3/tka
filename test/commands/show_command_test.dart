@@ -118,7 +118,7 @@ void main() {
       return runner;
     }
 
-    test('available_transitions includes hint per target', () async {
+    test('available_transitions lists target states', () async {
       File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
 version: 1
 name: myproj
@@ -130,45 +130,14 @@ fields:
 states:
   initial: todo
   transitions:
-    todo:
-      targets: [implementing]
-      hint:
-        implementing: "worktreeが自動作成される"
-      verify:
-        implementing: "./scripts/setup.sh"
+    todo: [implementing, cancelled]
     implementing: [done]
 ''');
       ticketStore.save(_makeTicket('myproj', 1, 'todo'));
 
       await makeRunnerWithProject().run(['show', 'myproj-001']);
       final result = parseOutput();
-      expect(result['available_transitions'], equals([
-        {'to': 'implementing', 'hint': 'worktreeが自動作成される'},
-      ]));
-    });
-
-    test('available_transitions omits hint when not set', () async {
-      File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
-version: 1
-name: myproj
-description: test project
-fields:
-  title:
-    type: string
-    required: true
-states:
-  initial: todo
-  transitions:
-    todo: [implementing]
-    implementing: [done]
-''');
-      ticketStore.save(_makeTicket('myproj', 1, 'todo'));
-
-      await makeRunnerWithProject().run(['show', 'myproj-001']);
-      final result = parseOutput();
-      expect(result['available_transitions'], equals([
-        {'to': 'implementing'},
-      ]));
+      expect(result['available_transitions'], equals(['implementing', 'cancelled']));
     });
 
     test('guide is included in output when set', () async {

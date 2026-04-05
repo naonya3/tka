@@ -198,44 +198,6 @@ void main() {
         expect(result['todo'], equals(['done']));
       });
 
-      test('getHint returns hint for specific transition target', () {
-        final withHint = StateMachine.fromYaml({
-          'initial': 'todo',
-          'transitions': {
-            'todo': {
-              'targets': ['implementing', 'cancelled'],
-              'hint': {
-                'implementing': 'worktreeが自動作成される',
-                'cancelled': 'チケットを破棄する',
-              },
-              'verify': {
-                'implementing': './scripts/setup-worktree.sh',
-              },
-            },
-            'implementing': ['testing'],
-          },
-        });
-        expect(withHint.getHint('todo', 'implementing'),
-            equals('worktreeが自動作成される'));
-        expect(withHint.getHint('todo', 'cancelled'),
-            equals('チケットを破棄する'));
-      });
-
-      test('getHint returns null when not set', () {
-        expect(withVerify.getHint('todo', 'red'), isNull);
-        expect(withVerify.getHint('red', 'green'), isNull);
-      });
-
-      test('getHint returns null for simple list format', () {
-        final simple = StateMachine.fromYaml({
-          'initial': 'todo',
-          'transitions': {
-            'todo': ['done'],
-          },
-        });
-        expect(simple.getHint('todo', 'done'), isNull);
-      });
-
       test('getGuide returns guide for state', () {
         final withGuide = StateMachine.fromYaml({
           'initial': 'todo',
@@ -267,31 +229,6 @@ void main() {
           },
         });
         expect(noGuide.getGuide('todo'), isNull);
-      });
-
-      test('toTransitionsJson includes hint when set', () {
-        final withHint = StateMachine.fromYaml({
-          'initial': 'todo',
-          'transitions': {
-            'todo': {
-              'targets': ['implementing'],
-              'hint': {
-                'implementing': 'worktreeが自動作成される',
-              },
-              'verify': {
-                'implementing': './scripts/setup.sh',
-              },
-            },
-            'implementing': ['done'],
-          },
-        });
-        final result = withHint.toTransitionsJson();
-        expect(result['todo'], equals({
-          'targets': ['implementing'],
-          'hint': {'implementing': 'worktreeが自動作成される'},
-          'verify': {'implementing': './scripts/setup.sh'},
-        }));
-        expect(result['implementing'], equals(['done']));
       });
 
       test('verify only applies to specified target', () {

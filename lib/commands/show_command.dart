@@ -48,12 +48,7 @@ Use --pretty for indented output.''';
         final guide = def.stateMachine.getGuide(ticket.status);
         if (guide != null) json['guide'] = guide;
         final targets = def.stateMachine.getAvailableTransitions(ticket.status);
-        json['available_transitions'] = targets.map((to) {
-          final obj = <String, dynamic>{'to': to};
-          final hint = def.stateMachine.getHint(ticket.status, to);
-          if (hint != null) obj['hint'] = hint;
-          return obj;
-        }).toList();
+        json['available_transitions'] = targets.map((to) => to).toList();
       } catch (_) {
         json['available_transitions'] = <Map<String, dynamic>>[];
       }

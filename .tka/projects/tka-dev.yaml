@@ -16,23 +16,14 @@ states:
   transitions:
     todo:
       targets: [implementing]
-      hint:
-        implementing: 'setup-worktree.shが自動実行される。mainから /tmp/<ticket-id> にgit worktreeが作られ、作業ブランチが切られる'
       verify:
         implementing: './scripts/setup-worktree.sh'
-    implementing:
-      targets: [testing]
-      hint:
-        testing: 'worktree内のコードがcommit済みであることを確認してから遷移する。未コミットの変更があるとdoneへの遷移時にverifyで弾かれる'
+    implementing: [testing]
     testing:
       targets: [done]
-      hint:
-        done: 'verify-done.shが自動実行される。失敗時はエラー内容を読み、worktreeで修正・コミットしてリトライする。ヘルプテキストやREADMEの更新漏れもAIレビューで指摘される'
       verify:
         done: './scripts/verify-done.sh'
     done:
       targets: [released]
-      hint:
-        released: 'release.shが自動実行される。mainへのfast-forwardマージ、worktree削除、make && make install、git pushが行われる'
       verify:
         released: './scripts/release.sh'

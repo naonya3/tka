@@ -4,5 +4,5 @@
 # Build
 build/
 
-# Runtime data
-.tka/
+# Ticket data (project definitions are tracked)
+.tka/data/

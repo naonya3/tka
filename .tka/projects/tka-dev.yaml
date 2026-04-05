@@ -1,0 +1,24 @@
+version: 1
+name: tka-dev
+description: tka development
+fields:
+  title:    { type: string, required: true }
+  detail:   { type: string }
+  worktree: { type: string }
+  history:  { type: list }
+states:
+  initial: todo
+  transitions:
+    todo:
+      targets: [implementing]
+      verify:
+        implementing: "./scripts/setup-worktree.sh"
+    implementing: [testing]
+    testing:
+      targets: [done]
+      verify:
+        done: "./scripts/verify-done.sh"
+    done:
+      targets: [released]
+      verify:
+        released: "./scripts/release.sh"

@@ -9,27 +9,30 @@ fields:
 states:
   initial: todo
   guide:
-    todo: '未着手のチケット。内容を確認してimplementingに遷移して作業開始'
-    implementing: 'worktree内でTDD（Red→Green→Refactor）でコードを書く。完了したらtestingへ'
-    testing: 'doneへ遷移するとverify-done.shが自動実行される。失敗したら修正してリトライ'
-    done: '検証済み。releasedに遷移するとmainへマージされる'
+    todo: 'チケットのtitleとdetailを読み、何を実装するか把握する。detailに特別な指示があれば従うこと。implementingに遷移するとmainから /tmp/<ticket-id> にgit worktreeが自動作成される'
+    implementing: '/tmp/<ticket-id> のworktreeでTDD（Red→Green→Refactor）でコードを書く。完了したらworktree内でgit commitし、testingに遷移する。未コミットの変更があると後の検証で弾かれる'
+    testing: 'doneへの遷移時にverify-done.shが自動実行される。検証内容: (1) uncommitted changes無し (2) dart test全パス (3) dart analyze全パス (4) AIレビューPASS。失敗したらエラー内容を読み、worktreeで修正・コミットして再度遷移する。ヘルプテキストやREADMEの更新漏れもAIレビューで指摘される'
+    done: '全検証パス済み。releasedに遷移するとmainへのfast-forwardマージ、worktree削除、make && make install、git pushが自動実行される'
   transitions:
     todo:
       targets: [implementing]
       hint:
-        implementing: 'setup-worktree.shが走り/tmp/<ticket-id>にworktreeが作られる'
+        implementing: 'setup-worktree.shが自動実行される。mainから /tmp/<ticket-id> にgit worktreeが作られ、作業ブランチが切られる'
       verify:
         implementing: './scripts/setup-worktree.sh'
-    implementing: [testing]
+    implementing:
+      targets: [testing]
+      hint:
+        testing: 'worktree内のコードがcommit済みであることを確認してから遷移する。未コミットの変更があるとdoneへの遷移時にverifyで弾かれる'
     testing:
       targets: [done]
       hint:
-        done: 'uncommitted changes無し・dart test・dart analyze・AIレビュー全パスが必要'
+        done: 'verify-done.shが自動実行される。失敗時はエラー内容を読み、worktreeで修正・コミットしてリトライする。ヘルプテキストやREADMEの更新漏れもAIレビューで指摘される'
       verify:
         done: './scripts/verify-done.sh'
     done:
       targets: [released]
       hint:
-        released: 'mainへマージ、worktree削除、make && make installが実行される'
+        released: 'release.shが自動実行される。mainへのfast-forwardマージ、worktree削除、make && make install、git pushが行われる'
       verify:
         released: './scripts/release.sh'

@@ -409,18 +409,36 @@ states:
       );
     });
 
-    test('overwrites existing archived project with same name', () async {
-      // First: create and archive a project
+    test('fails when archived project already exists', () async {
       writeProject('reuse', _simpleProject('reuse'));
       final output = <String>[];
       final runner = CommandRunner('tka', 'test')
         ..addCommand(ProjectCommand(basePath, printer: output.add));
       await runner.run(['project', 'archive', 'reuse']);
 
-      // Second: create a new project with the same name and archive again
+      // Create a new project with the same name and try to archive again
+      writeProject('reuse', _simpleProject('reuse'));
+      expect(
+        () => runner.run(['project', 'archive', 'reuse']),
+        throwsA(isA<Exception>().having(
+          (e) => e.toString(),
+          'message',
+          contains('--force'),
+        )),
+      );
+    });
+
+    test('overwrites existing archived project with --force', () async {
+      writeProject('reuse', _simpleProject('reuse'));
+      final output = <String>[];
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'archive', 'reuse']);
+
+      // Create a new project with the same name and archive with --force
       writeProject('reuse', _simpleProject('reuse'));
       output.clear();
-      await runner.run(['project', 'archive', 'reuse']);
+      await runner.run(['project', 'archive', '--force', 'reuse']);
 
       final json = jsonDecode(output[0]) as Map<String, dynamic>;
       expect(json['project'], 'reuse');

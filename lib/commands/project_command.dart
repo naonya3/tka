@@ -358,7 +358,12 @@ Output: {"project": "...", "archived": true}''';
   final ProjectStore _store;
   final void Function(String) _printer;
 
-  _ProjectArchiveCommand(this._store, this._printer);
+  _ProjectArchiveCommand(this._store, this._printer) {
+    argParser.addFlag('force',
+        abbr: 'f',
+        help: 'Overwrite existing archived project.',
+        negatable: false);
+  }
 
   @override
   void run() {
@@ -366,7 +371,8 @@ Output: {"project": "...", "archived": true}''';
       throw UsageException('Project name is required.', usage);
     }
     final name = argResults!.rest.first;
-    _store.archive(name);
+    final force = argResults!['force'] as bool;
+    _store.archive(name, force: force);
     _printer(jsonEncode({'project': name, 'archived': true}));
   }
 }

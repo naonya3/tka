@@ -36,7 +36,7 @@ class ProjectStore {
     return File(p.join(basePath, '$name.yaml')).existsSync();
   }
 
-  void archive(String name) {
+  void archive(String name, {bool force = false}) {
     final file = File(p.join(basePath, '$name.yaml'));
     if (!file.existsSync()) {
       throw Exception('Project not found: $name');
@@ -44,7 +44,14 @@ class ProjectStore {
     final archiveDir = Directory(p.join(basePath, 'archived'));
     if (!archiveDir.existsSync()) archiveDir.createSync();
     final dest = File(p.join(archiveDir.path, '$name.yaml'));
-    if (dest.existsSync()) dest.deleteSync();
+    if (dest.existsSync()) {
+      if (!force) {
+        throw Exception(
+            'Archived project already exists: $name. '
+            'Run "tka project unarchive $name" first, or use --force to overwrite.');
+      }
+      dest.deleteSync();
+    }
     file.renameSync(dest.path);
   }
 

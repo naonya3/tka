@@ -165,13 +165,7 @@ TAB: switch project  1-9: toggle status filter  0: reset filters  q: quit''';
   List<String> _getStatuses(String projectName) {
     try {
       final def = projectStore.load(projectName);
-      final sm = def.stateMachine;
-      final all = <String>{sm.initial};
-      for (final entry in sm.transitions.entries) {
-        all.add(entry.key);
-        all.addAll(entry.value);
-      }
-      return all.toList();
+      return getStatusesFromDefinition(def);
     } catch (_) {
       return [];
     }
@@ -183,5 +177,56 @@ TAB: switch project  1-9: toggle status filter  0: reset filters  q: quit''';
     } catch (_) {
       return 80;
     }
+  }
+}
+
+/// Extracts ordered status list from a project definition.
+List<String> getStatusesFromDefinition(
+    dynamic def) {
+  final sm = def.stateMachine;
+  final all = <String>{sm.initial};
+  for (final entry in sm.transitions.entries) {
+    all.add(entry.key);
+    all.addAll(entry.value);
+  }
+  return all.toList();
+}
+
+/// Manages watch dashboard filter state.
+class WatchFilterState {
+  final List<String> projectNames;
+  int projectIndex;
+  List<String> statuses;
+  Set<String> activeFilters;
+
+  WatchFilterState({
+    required this.projectNames,
+    this.projectIndex = 0,
+    required this.statuses,
+    required this.activeFilters,
+  });
+
+  String get currentProject => projectNames[projectIndex];
+
+  void nextProject() {
+    projectIndex = (projectIndex + 1) % projectNames.length;
+  }
+
+  void prevProject() {
+    projectIndex = (projectIndex - 1 + projectNames.length) % projectNames.length;
+  }
+
+  void toggleFilter(int index) {
+    if (index < 0 || index >= statuses.length) return;
+    final status = statuses[index];
+    if (activeFilters.contains(status)) {
+      activeFilters.remove(status);
+    } else {
+      activeFilters.add(status);
+    }
+  }
+
+  void resetFilters(Set<String> defaults) {
+    activeFilters = defaults;
   }
 }

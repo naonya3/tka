@@ -520,24 +520,17 @@ states:
       // todo state
       final todo = states['todo'] as Map<String, dynamic>;
       expect(todo['guide'], equals('Read the ticket and start'));
-      final todoTransitions = todo['transitions'] as List;
-      expect(todoTransitions.length, 1);
-      final t0 = todoTransitions[0] as Map<String, dynamic>;
-      expect(t0['to'], equals('implementing'));
-      expect(t0['hint'], equals('Worktree will be created'));
-      expect(t0['verify'], isTrue);
+      expect(todo['next'], equals(['implementing']));
 
       // implementing state
       final impl = states['implementing'] as Map<String, dynamic>;
       expect(impl['guide'], equals('Write code in worktree'));
-      final implTransitions = impl['transitions'] as List;
-      expect(implTransitions.length, 1);
-      expect((implTransitions[0] as Map)['to'], equals('done'));
+      expect(impl['next'], equals(['done']));
 
       // done state (terminal)
       final done = states['done'] as Map<String, dynamic>;
       expect(done['guide'], equals('All verified'));
-      expect(done.containsKey('transitions'), isFalse);
+      expect(done.containsKey('next'), isFalse);
     });
 
     test('works with simple project without guides', () async {
@@ -554,7 +547,7 @@ states:
       final states = json['states'] as Map<String, dynamic>;
       final todo = states['todo'] as Map<String, dynamic>;
       expect(todo.containsKey('guide'), isFalse);
-      expect((todo['transitions'] as List).length, 1);
+      expect(todo['next'], equals(['done']));
     });
 
     test('throws when no project name provided', () async {

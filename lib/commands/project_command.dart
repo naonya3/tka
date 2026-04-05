@@ -387,16 +387,7 @@ Use this to understand the project workflow before starting work.''';
 
       final targets = sm.getAvailableTransitions(state);
       if (targets.isNotEmpty) {
-        final transitionsList = <Map<String, dynamic>>[];
-        for (final target in targets) {
-          final t = <String, dynamic>{'to': target};
-          final hint = sm.getHint(state, target);
-          if (hint != null) t['hint'] = hint;
-          final verify = sm.getVerify(state, target);
-          if (verify != null) t['verify'] = true;
-          transitionsList.add(t);
-        }
-        stateMap['transitions'] = transitionsList;
+        stateMap['next'] = targets;
       }
 
       statesJson[state] = stateMap;

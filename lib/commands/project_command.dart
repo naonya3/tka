@@ -268,7 +268,7 @@ class _ProjectSchemaCommand extends Command {
 Usage: tka project schema
 Output: JSON describing available field types, properties, and states format.
 Use this to understand what JSON to pass to "tka project add --schema".
-To edit an existing project, modify the YAML file at: $(tka root)/projects/<name>.yaml''';
+To edit an existing project, modify the YAML file at: \$(tka root)/projects/<name>.yaml''';
 
   final void Function(String) _printer;
 

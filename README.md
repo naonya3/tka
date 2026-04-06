@@ -175,38 +175,6 @@ Verify commands receive these environment variables:
 
 `TKA_BASE_PATH` is also used for `.tka` resolution: `--base` > `TKA_BASE_PATH` > `./.tka` > parent directory search. This means verify scripts that spawn sub-agents can pass the tka context through automatically.
 
-## Hooks — Run Commands on Events
-
-Hooks let you run shell commands automatically when certain events occur.
-
-### on_create
-
-Runs a command after a ticket is created. The command is executed asynchronously (fire-and-forget) so it doesn't block ticket creation.
-
-```yaml
-states:
-  initial: todo
-  hooks:
-    on_create: "./scripts/on-create.sh"
-  transitions:
-    todo: [in_progress]
-    in_progress: [done]
-```
-
-When an agent runs `tka create myproj --set title="New task"`, tka creates the ticket, outputs the result, then fires `./scripts/on-create.sh` in the background.
-
-#### Environment variables
-
-The hook command receives these environment variables:
-
-| Variable | Example | Description |
-|----------|---------|-------------|
-| `TKA_TICKET_ID` | `myproj-001` | Ticket ID |
-| `TKA_TICKET_PROJECT` | `myproj` | Project name |
-| `TKA_TICKET_SEQ` | `1` | Sequence number |
-| `TKA_TICKET_STATUS` | `todo` | Initial status |
-| `TKA_BASE_PATH` | `/path/to/.tka` | Resolved .tka directory |
-
 ## Example: tka-dev — How tka Develops Itself
 
 tka uses itself for its own development. The `tka-dev` project is a real workflow that automates git worktree setup, testing, AI code review, and GitHub releases — all through verify scripts.

@@ -270,41 +270,5 @@ void main() {
         }));
       });
     });
-
-    group('hooks', () {
-      test('parses hooks.on_create from YAML', () {
-        final sm = StateMachine.fromYaml({
-          'initial': 'todo',
-          'hooks': {
-            'on_create': './scripts/on-create.sh',
-          },
-          'transitions': {
-            'todo': ['done'],
-          },
-        });
-        expect(sm.onCreateCommand, equals('./scripts/on-create.sh'));
-      });
-
-      test('onCreateCommand is null when hooks section is absent', () {
-        final sm = StateMachine.fromYaml({
-          'initial': 'todo',
-          'transitions': {
-            'todo': ['done'],
-          },
-        });
-        expect(sm.onCreateCommand, isNull);
-      });
-
-      test('onCreateCommand is null when hooks has no on_create', () {
-        final sm = StateMachine.fromYaml({
-          'initial': 'todo',
-          'hooks': {},
-          'transitions': {
-            'todo': ['done'],
-          },
-        });
-        expect(sm.onCreateCommand, isNull);
-      });
-    });
   });
 }

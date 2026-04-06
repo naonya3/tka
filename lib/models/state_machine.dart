@@ -3,14 +3,12 @@ class StateMachine {
   final Map<String, List<String>> transitions;
   final Map<String, String> _verifyCommands; // key: "from->to"
   final Map<String, String> _guides; // key: state name
-  final String? onCreateCommand;
 
   StateMachine({
     required this.initial,
     required this.transitions,
     Map<String, String>? verifyCommands,
     Map<String, String>? guides,
-    this.onCreateCommand,
   })  : _verifyCommands = verifyCommands ?? {},
         _guides = guides ?? {};
 
@@ -52,22 +50,11 @@ class StateMachine {
       }
     }
 
-    // Parse hooks section
-    String? onCreateCommand;
-    final hooks = data['hooks'];
-    if (hooks is Map) {
-      final onCreate = hooks['on_create'];
-      if (onCreate is String) {
-        onCreateCommand = onCreate;
-      }
-    }
-
     return StateMachine(
       initial: data['initial'] as String,
       transitions: transitions,
       verifyCommands: verifyCommands,
       guides: guides,
-      onCreateCommand: onCreateCommand,
     );
   }
 

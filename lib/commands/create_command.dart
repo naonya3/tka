@@ -8,6 +8,13 @@ import '../store/ticket_store.dart';
 import '../helpers/field_input.dart';
 import '../validators/schema_validator.dart';
 
+typedef ProcessStarter = Future<Process> Function(
+  String command,
+  List<String> args, {
+  Map<String, String>? environment,
+  ProcessStartMode? mode,
+});
+
 class CreateCommand extends Command {
   @override
   final String name = 'create';
@@ -27,13 +34,29 @@ Note: always quote --set values in zsh (e.g. --set 'field=value').''';
   final ProjectStore projectStore;
   final TicketStore ticketStore;
   final IOSink _out;
+  final String? _basePath;
+  final ProcessStarter _processStarter;
 
   CreateCommand({
     required this.projectStore,
     required this.ticketStore,
     IOSink? out,
-  }) : _out = out ?? stdout {
+    String? basePath,
+    ProcessStarter? processStarter,
+  })  : _out = out ?? stdout,
+        _basePath = basePath,
+        _processStarter = processStarter ?? _defaultProcessStarter {
     argParser.addMultiOption('set', abbr: 's', help: 'Set field value (field=value)', splitCommas: false);
+  }
+
+  static Future<Process> _defaultProcessStarter(
+    String command,
+    List<String> args, {
+    Map<String, String>? environment,
+    ProcessStartMode? mode,
+  }) {
+    return Process.start(command, args,
+        environment: environment, mode: mode ?? ProcessStartMode.normal);
   }
 
   @override
@@ -73,5 +96,21 @@ Note: always quote --set values in zsh (e.g. --set 'field=value').''';
     final seq = ticketStore.createNew(placeholder);
     final id = '$projectName-${seq.toString().padLeft(3, '0')}';
     _out.writeln(jsonEncode({'id': id, 'seq': seq}));
+
+    final onCreateCommand = project.stateMachine.onCreateCommand;
+    if (onCreateCommand != null) {
+      _processStarter(
+        onCreateCommand,
+        [],
+        environment: {
+          'TKA_TICKET_ID': id,
+          'TKA_TICKET_PROJECT': projectName,
+          'TKA_TICKET_SEQ': seq.toString(),
+          'TKA_TICKET_STATUS': project.stateMachine.initial,
+          if (_basePath != null) 'TKA_BASE_PATH': _basePath,
+        },
+        mode: ProcessStartMode.detached,
+      );
+    }
   }
 }

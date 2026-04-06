@@ -116,7 +116,7 @@ Long text: use pipe (--set field=-) or file (--set field=@path):
   echo "multiline\\ntext" | tka create proj --set title=T --set detail=-
   tka update <id> --set detail=@design.md''')
     ..addCommand(ProjectCommand(basePath))
-    ..addCommand(CreateCommand(projectStore: projectStore, ticketStore: ticketStore))
+    ..addCommand(CreateCommand(projectStore: projectStore, ticketStore: ticketStore, basePath: basePath))
     ..addCommand(ListCommand(
         projectStore: projectStore, ticketStore: ticketStore))
     ..addCommand(ShowCommand(projectStore: projectStore, ticketStore: ticketStore))

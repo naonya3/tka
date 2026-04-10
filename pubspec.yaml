@@ -1,5 +1,5 @@
 name: tka
-version: 0.7.4
+version: 0.7.5
 
 environment:
   sdk: ^3.10.7

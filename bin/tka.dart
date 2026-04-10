@@ -103,6 +103,7 @@ Examples:
   tka append <id> --field history --value "Done"
   tka archive <id>
   tka root
+  tka --base /path/to/.tka root
   tka watch
   tka project add <name> --template tdd
   tka project add <name> --schema '{"fields":{...},"states":{...}}'
@@ -132,6 +133,8 @@ Long text: use pipe (--set field=-) or file (--set field=@path):
         projectStore: projectStore,
         ticketStore: ticketStore,
         dataPath: '$basePath/data'));
+
+  runner.argParser.addOption('base', help: 'Path to .tka directory');
 
   try {
     final parsed = runner.parse(rest);

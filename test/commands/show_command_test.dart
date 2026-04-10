@@ -197,5 +197,77 @@ states:
       expect(result.containsKey('guide'), isFalse);
     });
   });
+
+  group('--field option', () {
+    test('outputs raw string field value', () async {
+      ticketStore.save(_makeTicket('proj', 1, 'todo', fields: {
+        'title': 'My Task',
+        'detail': 'Some detailed description',
+      }));
+
+      await makeRunner().run(['show', 'proj-001', '--field', 'detail']);
+      expect(out.lines.join(''), equals('Some detailed description'));
+    });
+
+    test('outputs raw number field value', () async {
+      ticketStore.save(_makeTicket('proj', 1, 'todo', fields: {
+        'title': 'Task',
+        'priority': 3,
+      }));
+
+      await makeRunner().run(['show', 'proj-001', '--field', 'priority']);
+      expect(out.lines.join(''), equals('3'));
+    });
+
+    test('outputs list field as JSON array', () async {
+      ticketStore.save(_makeTicket('proj', 1, 'todo', fields: {
+        'title': 'Task',
+        'history': ['step 1', 'step 2'],
+      }));
+
+      await makeRunner().run(['show', 'proj-001', '--field', 'history']);
+      final result = jsonDecode(out.lines.join(''));
+      expect(result, equals(['step 1', 'step 2']));
+    });
+
+    test('outputs empty string for null field', () async {
+      ticketStore.save(_makeTicket('proj', 1, 'todo', fields: {
+        'title': 'Task',
+      }));
+
+      await makeRunner().run(['show', 'proj-001', '--field', 'detail']);
+      expect(out.lines.join(''), equals(''));
+    });
+
+    test('outputs empty list as JSON for missing list-like field', () async {
+      ticketStore.save(_makeTicket('proj', 1, 'todo', fields: {
+        'title': 'Task',
+      }));
+
+      await makeRunner().run(['show', 'proj-001', '--field', 'history']);
+      // null field outputs empty string
+      expect(out.lines.join(''), equals(''));
+    });
+
+    test('outputs multiline string preserving newlines', () async {
+      ticketStore.save(_makeTicket('proj', 1, 'todo', fields: {
+        'title': 'Task',
+        'detail': 'line 1\nline 2\nline 3',
+      }));
+
+      await makeRunner().run(['show', 'proj-001', '--field', 'detail']);
+      expect(out.lines.join(''), equals('line 1\nline 2\nline 3'));
+    });
+
+    test('--field ignores --pretty flag', () async {
+      ticketStore.save(_makeTicket('proj', 1, 'todo', fields: {
+        'title': 'My Task',
+      }));
+
+      await makeRunner()
+          .run(['show', 'proj-001', '--field', 'title', '--pretty']);
+      expect(out.lines.join(''), equals('My Task'));
+    });
+  });
 }
 

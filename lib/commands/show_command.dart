@@ -12,8 +12,10 @@ class ShowCommand extends Command<void> {
   final String description = '''Show ticket details.
 
 Usage: tka show <id>  (e.g. tka show shopping-001)
+       tka show <id> --field <name>  (raw field value, not JSON)
 Output: compact JSON (one line). Includes available_transitions for current status.
-Use --pretty for indented output.''';
+Use --pretty for indented output.
+Use --field to get a single field value as raw text (lists output as JSON array).''';
 
   final ProjectStore? projectStore;
   final TicketStore ticketStore;
@@ -24,7 +26,11 @@ Use --pretty for indented output.''';
     required this.ticketStore,
     IOSink? out,
   }) : _out = out ?? stdout {
-    argParser.addFlag('pretty', help: 'Pretty-print JSON output', defaultsTo: false);
+    argParser
+      ..addFlag('pretty',
+          help: 'Pretty-print JSON output', defaultsTo: false)
+      ..addOption('field',
+          abbr: 'f', help: 'Output a single field value as raw text');
   }
 
   @override
@@ -38,6 +44,21 @@ Use --pretty for indented output.''';
     final (project, seq) = _parseIdOrUsageError(rawId);
 
     final ticket = ticketStore.load(project, seq);
+
+    // --field mode: output raw field value
+    final fieldName = argResults!['field'] as String?;
+    if (fieldName != null) {
+      final value = ticket.fields[fieldName];
+      if (value == null) {
+        _out.writeln('');
+      } else if (value is List) {
+        _out.writeln(jsonEncode(value));
+      } else {
+        _out.writeln(value.toString());
+      }
+      return;
+    }
+
     final json = ticket.toJson();
 
     if (projectStore != null) {

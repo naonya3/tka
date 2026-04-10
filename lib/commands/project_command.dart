@@ -176,7 +176,7 @@ Use "tka project schema" to see the full specification.''';
       await for (final chunk in input) {
         bytes.addAll(chunk);
       }
-      jsonStr = String.fromCharCodes(bytes);
+      jsonStr = utf8.decode(bytes);
     } else {
       jsonStr = schemaOption;
     }

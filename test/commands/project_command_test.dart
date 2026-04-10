@@ -285,6 +285,32 @@ states:
       expect(def.description, 'Piped');
     });
 
+    test('creates project from stdin with multibyte UTF-8 characters', () async {
+      final output = <String>[];
+      final schema = jsonEncode({
+        'description': 'テストプロジェクト',
+        'fields': {
+          'title': {'type': 'string', 'required': true},
+        },
+        'states': {
+          'initial': 'new',
+          'transitions': {
+            'new': ['done'],
+          },
+        },
+      });
+      final stdinStream = Stream<List<int>>.fromIterable([utf8.encode(schema)]);
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add, stdinStream: stdinStream));
+      await runner.run(['project', 'add', 'utf8-proj', '--schema', '-']);
+      final json = jsonDecode(output[0]) as Map<String, dynamic>;
+      expect(json['project'], 'utf8-proj');
+      final store = ProjectStore('$basePath/projects');
+      final def = store.load('utf8-proj');
+      expect(def.name, 'utf8-proj');
+      expect(def.description, 'テストプロジェクト');
+    });
+
     test('creates project with verify transitions from JSON schema', () async {
       final output = <String>[];
       final schema = jsonEncode({

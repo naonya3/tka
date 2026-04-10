@@ -45,7 +45,7 @@ void main() {
       result = Process.runSync(
         'dart',
         ['run', 'bin/tka.dart'],
-        environment: {'TKA_BASE_PATH': tmpDir.path + '/nonexistent'},
+        environment: {'TKA_BASE_PATH': '${tmpDir.path}/nonexistent'},
       );
     });
 

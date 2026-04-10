@@ -243,6 +243,13 @@ Use "tka project schema" to see the full specification.''';
     buf.writeln('states:');
     final states = data['states'] as Map;
     buf.writeln('  initial: ${states['initial']}');
+    if (states['guide'] is Map) {
+      buf.writeln('  guide:');
+      final guide = states['guide'] as Map;
+      for (final entry in guide.entries) {
+        buf.writeln('    ${entry.key}: ${_yamlStr(entry.value as String)}');
+      }
+    }
     buf.writeln('  transitions:');
     final transitions = states['transitions'] as Map;
     for (final entry in transitions.entries) {

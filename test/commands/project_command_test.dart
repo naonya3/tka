@@ -339,6 +339,40 @@ states:
       expect(def.stateMachine.getAvailableTransitions('doing'), ['done']);
     });
 
+    test('creates project with guide section from JSON schema', () async {
+      final output = <String>[];
+      final schema = jsonEncode({
+        'description': 'Guide test project',
+        'fields': {
+          'title': {'type': 'string', 'required': true},
+        },
+        'states': {
+          'initial': 'todo',
+          'guide': {
+            'todo': 'Read the ticket and understand',
+            'implementing': 'Write code in worktree',
+            'done': 'All checks passed',
+          },
+          'transitions': {
+            'todo': ['implementing'],
+            'implementing': ['done'],
+          },
+        },
+      });
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'add', 'guide-proj', '--schema', schema]);
+      final json = jsonDecode(output[0]) as Map<String, dynamic>;
+      expect(json['project'], 'guide-proj');
+
+      // Reload from YAML and verify guides are preserved
+      final store = ProjectStore('$basePath/projects');
+      final def = store.load('guide-proj');
+      expect(def.stateMachine.getGuide('todo'), 'Read the ticket and understand');
+      expect(def.stateMachine.getGuide('implementing'), 'Write code in worktree');
+      expect(def.stateMachine.getGuide('done'), 'All checks passed');
+    });
+
     test('rejects invalid JSON', () async {
       final output = <String>[];
       final runner = CommandRunner('tka', 'test')

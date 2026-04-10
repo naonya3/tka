@@ -58,6 +58,10 @@ tka transition <id> --to <status> --set field=value --append list_field=value
 tka append <id> --field history --value "Done"
 tka archive <id>
 
+# --- Global option: --base ---
+tka --base /path/to/.tka list -p myproj   # Use specific .tka directory
+tka --base /path/to/.tka root             # Print resolved .tka path
+
 # --- Dashboard ---
 tka watch                                 # Real-time TUI dashboard
 ```

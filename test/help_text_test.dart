@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:test/test.dart';
 
 void main() {
-  group('help text', () {
+  group('help text (with .tka)', () {
     late ProcessResult result;
 
     setUpAll(() {
@@ -11,7 +11,6 @@ void main() {
 
     test('shows --base in Global options section', () {
       final output = result.stdout as String;
-      // --base should appear in Global options, between the header and the Available commands
       expect(output, contains('--base'));
       expect(output, contains('Path to .tka directory'));
     });
@@ -31,6 +30,38 @@ void main() {
           reason: 'Available commands should be present');
       expect(baseIndex, lessThan(commandsIndex),
           reason: '--base should appear before Available commands');
+    });
+  });
+
+  group('fallback help text (without .tka)', () {
+    late Directory tmpDir;
+    late ProcessResult result;
+
+    setUpAll(() {
+      // Create a temp directory with no .tka to trigger fallback help
+      tmpDir = Directory.systemTemp.createTempSync('tka_help_test_');
+      // Run tka with no args from a directory without .tka
+      // Use environment to unset TKA_BASE_PATH
+      result = Process.runSync(
+        'dart',
+        ['run', 'bin/tka.dart'],
+        environment: {'TKA_BASE_PATH': tmpDir.path + '/nonexistent'},
+      );
+    });
+
+    tearDownAll(() {
+      tmpDir.deleteSync(recursive: true);
+    });
+
+    test('shows --base in fallback help', () {
+      final output = result.stderr as String;
+      expect(output, contains('--base'));
+      expect(output, contains('Path to .tka directory'));
+    });
+
+    test('shows --base usage example in fallback help', () {
+      final output = result.stderr as String;
+      expect(output, contains('tka --base /path/to/.tka'));
     });
   });
 }

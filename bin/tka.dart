@@ -168,6 +168,10 @@ No human-friendly formatting — designed to be consumed by AI agents directly.
 
 .tka resolution: --base <path> > TKA_BASE_PATH env > ./.tka > search parent directories.
 
+Global options:
+  --base    Path to .tka directory
+  -h        Print this usage information
+
 Commands:
   init            Initialize .tka/ in current directory
   project         Manage project definitions
@@ -180,6 +184,11 @@ Commands:
   archive         Archive a ticket
   watch           Real-time ticket dashboard
   root            Print resolved .tka path
+
+Examples:
+  tka init
+  tka --base /path/to/.tka root
+  tka list -p myproject
 
 Run "tka <command> --help" for more information about a command.
 Run "tka init" first to get started.''';

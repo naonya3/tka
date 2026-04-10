@@ -2,10 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart' as p;
+import '../helpers/field_input.dart';
 import '../helpers/ticket_id.dart';
+import '../models/field_definition.dart';
 import '../models/ticket.dart';
 import '../store/project_store.dart';
 import '../store/ticket_store.dart';
+import '../validators/schema_validator.dart';
 import '../validators/transition_validator.dart';
 
 class TransitionCommand extends Command<void> {
@@ -14,10 +17,11 @@ class TransitionCommand extends Command<void> {
   @override
   final String description = '''Transition ticket to a new status.
 
-Usage: tka transition <id> --to <status>
+Usage: tka transition <id> --to <status> [--set field=value ...] [--append field=value ...]
 Only transitions defined in the project state machine are allowed.
 If the transition has a "verify" command, it runs before transitioning.
 The transition is blocked if the command exits with non-zero.
+Field updates via --set/--append are applied after verify passes.
 See "tka project schema" for verify definition and available environment variables.
 Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
 
@@ -32,7 +36,16 @@ Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
     this.basePath,
     IOSink? out,
   }) : _out = out ?? stdout {
-    argParser.addOption('to', help: 'Target status', mandatory: true);
+    argParser
+      ..addOption('to', help: 'Target status', mandatory: true)
+      ..addMultiOption('set',
+          abbr: 's',
+          help: 'Set field value (field=value)',
+          splitCommas: false)
+      ..addMultiOption('append',
+          abbr: 'a',
+          help: 'Append to list field (field=value)',
+          splitCommas: false);
   }
 
   @override
@@ -46,11 +59,38 @@ Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
     final ticket = ticketStore.load(project, seq);
     final projectDef = projectStore.load(project);
     final targetStatus = argResults!['to'] as String;
+    final setOptions = argResults!['set'] as List<String>;
+    final appendOptions = argResults!['append'] as List<String>;
 
     final error = TransitionValidator.validate(
         projectDef.stateMachine, ticket.status, targetStatus);
     if (error != null) {
       throw Exception(error);
+    }
+
+    // Validate --set and --append options early (before verify)
+    Map<String, dynamic>? changedFields;
+    if (setOptions.isNotEmpty) {
+      changedFields = buildFieldsFromSetOptions(setOptions, projectDef.fields);
+    }
+
+    final appendEntries = <String, String>{};
+    for (final opt in appendOptions) {
+      final (name, rawValue) = parseSetOption(opt);
+      final fieldDef = projectDef.fields[name];
+      if (fieldDef == null) {
+        throw Exception(
+            'Field "$name" is not defined in project ${ticket.project}');
+      }
+      if (fieldDef.type != FieldType.list) {
+        throw Exception(
+            'Field "$name" is not a list type (got ${fieldDef.type.name})');
+      }
+      final value = resolveFieldValue(rawValue)!;
+      if (value.isEmpty) {
+        throw Exception('Append value for "$name" cannot be empty.');
+      }
+      appendEntries[name] = value;
     }
 
     String? verifyOutput;
@@ -89,6 +129,29 @@ Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
 
     // Reload ticket in case verify script modified it
     final current = ticketStore.load(project, seq);
+
+    // Apply --set and --append field changes after verify passes
+    final newFields = Map<String, dynamic>.from(current.fields);
+    if (changedFields != null) {
+      newFields.addAll(changedFields);
+    }
+    for (final entry in appendEntries.entries) {
+      final existing = newFields[entry.key];
+      final list =
+          existing is List ? List<dynamic>.from(existing) : <dynamic>[];
+      list.add(entry.value);
+      newFields[entry.key] = list;
+    }
+
+    // Validate merged fields
+    if (changedFields != null || appendEntries.isNotEmpty) {
+      final errors =
+          SchemaValidator.validate(newFields, projectDef.fields);
+      if (errors.isNotEmpty) {
+        throw Exception('Validation errors:\n${errors.join('\n')}');
+      }
+    }
+
     final now = DateTime.now();
     final nowStr = now.toIso8601String();
     final currentJson = current.toJson();
@@ -96,7 +159,7 @@ Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
       project: current.project,
       seq: current.seq,
       status: targetStatus,
-      fields: current.fields,
+      fields: newFields,
       createdAt: current.createdAt,
       updatedAt: now,
       createdAtRaw: currentJson['created_at'] as String,

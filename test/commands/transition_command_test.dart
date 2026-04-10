@@ -605,4 +605,435 @@ states:
     expect(json['updated_at'], isNot(equals('2026-04-01T10:00:00+09:00')));
     expect(json['created_at'], equals('2026-04-01T10:00:00+09:00'));
   });
+
+  group('--set option', () {
+    late Directory setTmpDir;
+    late ProjectStore setProjectStore;
+    late TicketStore setTicketStore;
+
+    setUp(() {
+      setTmpDir = Directory.systemTemp.createTempSync('transition_set_test_');
+      final projectsDir = Directory('${setTmpDir.path}/projects');
+      projectsDir.createSync(recursive: true);
+      final dataDir = Directory('${setTmpDir.path}/data');
+      dataDir.createSync(recursive: true);
+
+      File('${projectsDir.path}/setproj.yaml').writeAsStringSync('''
+version: 1
+name: setproj
+description: test
+fields:
+  title: { type: string, required: true }
+  verdict: { type: string }
+  priority: { type: number }
+  history: { type: list }
+states:
+  initial: todo
+  transitions:
+    todo: [doing]
+    doing: [done]
+''');
+
+      setProjectStore = ProjectStore(projectsDir.path);
+      setTicketStore = TicketStore(dataDir.path);
+
+      final ticket = Ticket(
+        project: 'setproj',
+        seq: 1,
+        status: 'todo',
+        fields: {'title': 'Test ticket'},
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      setTicketStore.save(ticket);
+    });
+
+    tearDown(() {
+      setTmpDir.deleteSync(recursive: true);
+    });
+
+    test('sets field during transition', () async {
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: setProjectStore,
+          ticketStore: setTicketStore,
+          out: out,
+        ));
+      await r.run([
+        'transition', 'setproj-001', '--to', 'doing',
+        '--set', 'verdict=approved',
+      ]);
+      final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
+      expect(json['to'], equals('doing'));
+
+      final loaded = setTicketStore.load('setproj', 1);
+      expect(loaded.status, equals('doing'));
+      expect(loaded.fields['verdict'], equals('approved'));
+    });
+
+    test('sets multiple fields during transition', () async {
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: setProjectStore,
+          ticketStore: setTicketStore,
+          out: out,
+        ));
+      await r.run([
+        'transition', 'setproj-001', '--to', 'doing',
+        '--set', 'verdict=approved',
+        '--set', 'priority=3',
+      ]);
+
+      final loaded = setTicketStore.load('setproj', 1);
+      expect(loaded.status, equals('doing'));
+      expect(loaded.fields['verdict'], equals('approved'));
+      expect(loaded.fields['priority'], equals(3));
+    });
+
+    test('rejects unknown field in --set', () async {
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: setProjectStore,
+          ticketStore: setTicketStore,
+          out: out,
+        ));
+      expect(
+        () => r.run([
+          'transition', 'setproj-001', '--to', 'doing',
+          '--set', 'nonexistent=value',
+        ]),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      // Ticket should NOT have transitioned
+      final loaded = setTicketStore.load('setproj', 1);
+      expect(loaded.status, equals('todo'));
+    });
+
+    test('rejects --set on list field', () async {
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: setProjectStore,
+          ticketStore: setTicketStore,
+          out: out,
+        ));
+      expect(
+        () => r.run([
+          'transition', 'setproj-001', '--to', 'doing',
+          '--set', 'history=value',
+        ]),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      final loaded = setTicketStore.load('setproj', 1);
+      expect(loaded.status, equals('todo'));
+    });
+  });
+
+  group('--append option', () {
+    late Directory appendTmpDir;
+    late ProjectStore appendProjectStore;
+    late TicketStore appendTicketStore;
+
+    setUp(() {
+      appendTmpDir =
+          Directory.systemTemp.createTempSync('transition_append_test_');
+      final projectsDir = Directory('${appendTmpDir.path}/projects');
+      projectsDir.createSync(recursive: true);
+      final dataDir = Directory('${appendTmpDir.path}/data');
+      dataDir.createSync(recursive: true);
+
+      File('${projectsDir.path}/appproj.yaml').writeAsStringSync('''
+version: 1
+name: appproj
+description: test
+fields:
+  title: { type: string, required: true }
+  history: { type: list }
+  tags: { type: list }
+  verdict: { type: string }
+states:
+  initial: todo
+  transitions:
+    todo: [doing]
+    doing: [done]
+''');
+
+      appendProjectStore = ProjectStore(projectsDir.path);
+      appendTicketStore = TicketStore(dataDir.path);
+
+      final ticket = Ticket(
+        project: 'appproj',
+        seq: 1,
+        status: 'todo',
+        fields: {'title': 'Test ticket', 'history': ['created']},
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      appendTicketStore.save(ticket);
+    });
+
+    tearDown(() {
+      appendTmpDir.deleteSync(recursive: true);
+    });
+
+    test('appends to list field during transition', () async {
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: appendProjectStore,
+          ticketStore: appendTicketStore,
+          out: out,
+        ));
+      await r.run([
+        'transition', 'appproj-001', '--to', 'doing',
+        '--append', 'history=started working',
+      ]);
+      final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
+      expect(json['to'], equals('doing'));
+
+      final loaded = appendTicketStore.load('appproj', 1);
+      expect(loaded.status, equals('doing'));
+      expect(loaded.fields['history'], equals(['created', 'started working']));
+    });
+
+    test('appends to empty list field', () async {
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: appendProjectStore,
+          ticketStore: appendTicketStore,
+          out: out,
+        ));
+      await r.run([
+        'transition', 'appproj-001', '--to', 'doing',
+        '--append', 'tags=urgent',
+      ]);
+
+      final loaded = appendTicketStore.load('appproj', 1);
+      expect(loaded.fields['tags'], equals(['urgent']));
+    });
+
+    test('rejects --append on non-list field', () async {
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: appendProjectStore,
+          ticketStore: appendTicketStore,
+          out: out,
+        ));
+      expect(
+        () => r.run([
+          'transition', 'appproj-001', '--to', 'doing',
+          '--append', 'verdict=approved',
+        ]),
+        throwsException,
+      );
+
+      final loaded = appendTicketStore.load('appproj', 1);
+      expect(loaded.status, equals('todo'));
+    });
+
+    test('rejects --append on unknown field', () async {
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: appendProjectStore,
+          ticketStore: appendTicketStore,
+          out: out,
+        ));
+      expect(
+        () => r.run([
+          'transition', 'appproj-001', '--to', 'doing',
+          '--append', 'nonexistent=value',
+        ]),
+        throwsException,
+      );
+    });
+  });
+
+  group('--set and --append combined', () {
+    late Directory comboTmpDir;
+    late ProjectStore comboProjectStore;
+    late TicketStore comboTicketStore;
+
+    setUp(() {
+      comboTmpDir =
+          Directory.systemTemp.createTempSync('transition_combo_test_');
+      final projectsDir = Directory('${comboTmpDir.path}/projects');
+      projectsDir.createSync(recursive: true);
+      final dataDir = Directory('${comboTmpDir.path}/data');
+      dataDir.createSync(recursive: true);
+
+      File('${projectsDir.path}/combo.yaml').writeAsStringSync('''
+version: 1
+name: combo
+description: test
+fields:
+  title: { type: string, required: true }
+  verdict: { type: string }
+  history: { type: list }
+states:
+  initial: todo
+  transitions:
+    todo: [doing]
+    doing: [done]
+''');
+
+      comboProjectStore = ProjectStore(projectsDir.path);
+      comboTicketStore = TicketStore(dataDir.path);
+
+      final ticket = Ticket(
+        project: 'combo',
+        seq: 1,
+        status: 'todo',
+        fields: {'title': 'Test ticket', 'history': ['created']},
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      comboTicketStore.save(ticket);
+    });
+
+    tearDown(() {
+      comboTmpDir.deleteSync(recursive: true);
+    });
+
+    test('sets and appends in single transition', () async {
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: comboProjectStore,
+          ticketStore: comboTicketStore,
+          out: out,
+        ));
+      await r.run([
+        'transition', 'combo-001', '--to', 'doing',
+        '--set', 'verdict=approved',
+        '--append', 'history=transitioned to doing',
+      ]);
+      final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
+      expect(json['to'], equals('doing'));
+
+      final loaded = comboTicketStore.load('combo', 1);
+      expect(loaded.status, equals('doing'));
+      expect(loaded.fields['verdict'], equals('approved'));
+      expect(loaded.fields['history'],
+          equals(['created', 'transitioned to doing']));
+    });
+  });
+
+  group('--set/--append with verify', () {
+    late Directory verifySetTmpDir;
+    late ProjectStore verifySetProjectStore;
+    late TicketStore verifySetTicketStore;
+
+    setUp(() {
+      verifySetTmpDir =
+          Directory.systemTemp.createTempSync('transition_verify_set_test_');
+      final projectsDir = Directory('${verifySetTmpDir.path}/projects');
+      projectsDir.createSync(recursive: true);
+      final dataDir = Directory('${verifySetTmpDir.path}/data');
+      dataDir.createSync(recursive: true);
+
+      File('${projectsDir.path}/vset.yaml').writeAsStringSync('''
+version: 1
+name: vset
+description: test
+fields:
+  title: { type: string, required: true }
+  verdict: { type: string }
+  history: { type: list }
+states:
+  initial: todo
+  transitions:
+    todo:
+      targets: [doing]
+      verify:
+        doing: "true"
+    doing:
+      targets: [done]
+      verify:
+        done: "false"
+''');
+
+      verifySetProjectStore = ProjectStore(projectsDir.path);
+      verifySetTicketStore = TicketStore(dataDir.path);
+
+      final ticket = Ticket(
+        project: 'vset',
+        seq: 1,
+        status: 'todo',
+        fields: {'title': 'Test ticket'},
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      verifySetTicketStore.save(ticket);
+    });
+
+    tearDown(() {
+      verifySetTmpDir.deleteSync(recursive: true);
+    });
+
+    test('applies --set after verify passes', () async {
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: verifySetProjectStore,
+          ticketStore: verifySetTicketStore,
+          out: out,
+        ));
+      await r.run([
+        'transition', 'vset-001', '--to', 'doing',
+        '--set', 'verdict=approved',
+      ]);
+
+      final loaded = verifySetTicketStore.load('vset', 1);
+      expect(loaded.status, equals('doing'));
+      expect(loaded.fields['verdict'], equals('approved'));
+    });
+
+    test('does not apply --set when verify fails', () async {
+      // First transition to doing
+      final out1 = TestSink();
+      final r1 = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: verifySetProjectStore,
+          ticketStore: verifySetTicketStore,
+          out: out1,
+        ));
+      await r1.run(['transition', 'vset-001', '--to', 'doing']);
+
+      // Try to transition to done (verify fails)
+      final out2 = TestSink();
+      final r2 = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: verifySetProjectStore,
+          ticketStore: verifySetTicketStore,
+          out: out2,
+        ));
+      expect(
+        () => r2.run([
+          'transition', 'vset-001', '--to', 'done',
+          '--set', 'verdict=should-not-persist',
+        ]),
+        throwsException,
+      );
+
+      final loaded = verifySetTicketStore.load('vset', 1);
+      expect(loaded.status, equals('doing'));
+      expect(loaded.fields['verdict'], isNull);
+    });
+  });
 }

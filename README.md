@@ -53,6 +53,7 @@ tka list -p <project> --archived          # List archived tickets
 tka show <id>                             # Full ticket JSON + guide? + available_transitions
 tka update <id> --set field=value
 tka transition <id> --to <status>         # Result JSON includes guide? for target state
+tka transition <id> --to <status> --set field=value --append list_field=value
 tka append <id> --field history --value "Done"
 tka archive <id>
 

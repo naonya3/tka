@@ -7,7 +7,7 @@ import 'package:tka/commands/create_command.dart';
 import 'package:tka/commands/list_command.dart';
 import 'package:tka/commands/show_command.dart';
 import 'package:tka/commands/update_command.dart';
-import 'package:tka/commands/transition_command.dart';
+import 'package:tka/commands/transition_command.dart' show TransitionCommand, VerifyFailedException;
 import 'package:tka/commands/append_command.dart';
 import 'package:tka/commands/watch_command.dart';
 import 'package:tka/commands/archive_command.dart';
@@ -145,6 +145,12 @@ Long text: use pipe (--set field=-) or file (--set field=@path):
   } on UsageException catch (e) {
     stderr.writeln(jsonEncode({'error': e.message}));
     exit(64);
+  } on VerifyFailedException catch (e) {
+    final json = e.toJson();
+    final scrubbed = json.map((k, v) =>
+        MapEntry(k, v is String ? v.replaceAll(basePath, '<store>') : v));
+    stderr.writeln(jsonEncode(scrubbed));
+    exit(1);
   } on FormatException catch (e) {
     stderr.writeln(jsonEncode({'error': e.message}));
     exit(1);

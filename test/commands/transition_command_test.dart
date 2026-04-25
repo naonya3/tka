@@ -509,11 +509,10 @@ states:
 
       expect(
         () => r.run(['transition', 'failout-001', '--to', 'done']),
-        throwsA(isA<Exception>().having(
-            (e) => e.toString(), 'message', allOf(
-              contains('Verify failed'),
-              contains('3 tests failed'),
-            ))),
+        throwsA(isA<VerifyFailedException>()
+            .having((e) => e.message, 'message', contains('Verify failed'))
+            .having((e) => e.output, 'output', contains('3 tests failed'))
+            .having((e) => e.exitCode, 'exitCode', isNot(equals(0)))),
       );
     });
 

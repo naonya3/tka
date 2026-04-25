@@ -11,6 +11,33 @@ import '../store/ticket_store.dart';
 import '../validators/schema_validator.dart';
 import '../validators/transition_validator.dart';
 
+class VerifyFailedException implements Exception {
+  final String message;
+  final String? output;
+  final String command;
+  final int exitCode;
+
+  VerifyFailedException({
+    required this.message,
+    this.output,
+    required this.command,
+    required this.exitCode,
+  });
+
+  Map<String, dynamic> toJson() {
+    final json = <String, dynamic>{
+      'error': message,
+      'command': command,
+      'exit_code': exitCode,
+    };
+    if (output != null) json['output'] = output;
+    return json;
+  }
+
+  @override
+  String toString() => message;
+}
+
 class TransitionCommand extends Command<void> {
   @override
   final String name = 'transition';
@@ -139,11 +166,13 @@ Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
         verifyOutput = combinedOutput;
       }
       if (result.exitCode != 0) {
-        throw Exception(jsonEncode({
-          'error': 'Verify failed for transition ${ticket.status} → $targetStatus. '
-              'Command: $verifyCmd (exit code ${result.exitCode}).',
-          'output': ?verifyOutput,
-        }));
+        throw VerifyFailedException(
+          message:
+              'Verify failed for transition ${ticket.status} → $targetStatus.',
+          command: verifyCmd,
+          exitCode: result.exitCode,
+          output: verifyOutput,
+        );
       }
     }
 

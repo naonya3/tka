@@ -300,12 +300,12 @@ class _ProjectSchemaCommand extends Command {
   @override
   final String name = 'schema';
   @override
-  final String description = '''Show project YAML schema specification.
+  final String description = '''Show the workflow declaration schema specification.
 
 Usage: tka project schema
-Output: JSON describing available field types, properties, and states format.
-Use this to understand what JSON to pass to "tka project add --schema".
-To edit an existing project, modify the YAML file at: \$(tka root)/projects/<name>.yaml''';
+Output: JSON describing the schema you use to declare a workflow — field types, state machine format, guides, verify hooks.
+Read this when designing a workflow for the user; pass the JSON to "tka project add --schema".
+To edit an existing workflow, modify the YAML file at: \$(tka root)/projects/<name>.yaml''';
 
   final void Function(String) _printer;
 

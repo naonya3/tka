@@ -11,11 +11,14 @@ import '../test_helpers.dart';
 
 Ticket _makeTicket(String project, int seq, String status,
     {Map<String, dynamic>? fields}) {
+  final src = fields != null ? Map<String, dynamic>.from(fields) : <String, dynamic>{};
+  final title = (src.remove('title') as String?) ?? 'ticket $seq';
   return Ticket(
     project: project,
     seq: seq,
+    title: title,
     status: status,
-    fields: fields ?? {'title': 'ticket $seq'},
+    fields: src,
     createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
     updatedAt: DateTime.parse('2026-04-02T14:30:00+09:00'),
     createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -58,7 +61,7 @@ void main() {
       expect(result['id'], equals('myproj-003'));
       expect(result['project'], equals('myproj'));
       expect(result['status'], equals('in_progress'));
-      expect(result['fields']['title'], equals('Implement feature'));
+      expect(result['title'], equals('Implement feature'));
       expect(result['fields']['detail'], equals('Some detail'));
       expect(result['created_at'], equals('2026-04-01T10:00:00+09:00'));
       expect(result['updated_at'], equals('2026-04-02T14:30:00+09:00'));
@@ -128,13 +131,10 @@ void main() {
 
     test('available_transitions lists target states', () async {
       File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: myproj
 description: test project
-fields:
-  title:
-    type: string
-    required: true
+fields: {}
 states:
   initial: todo
   transitions:
@@ -150,13 +150,10 @@ states:
 
     test('guide is included in output when set', () async {
       File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: myproj
 description: test project
-fields:
-  title:
-    type: string
-    required: true
+fields: {}
 states:
   initial: todo
   guide:
@@ -175,13 +172,10 @@ states:
 
     test('guide is omitted when not set for current status', () async {
       File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: myproj
 description: test project
-fields:
-  title:
-    type: string
-    required: true
+fields: {}
 states:
   initial: todo
   guide:

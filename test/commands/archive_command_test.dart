@@ -14,8 +14,9 @@ Ticket _makeTicket(String project, int seq, String status) {
   return Ticket(
     project: project,
     seq: seq,
+    title: 'ticket $seq',
     status: status,
-    fields: {'title': 'ticket $seq'},
+    fields: {},
     createdAt: now,
     updatedAt: now,
     createdAtRaw: nowStr,

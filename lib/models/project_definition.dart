@@ -17,10 +17,10 @@ class ProjectDefinition {
   });
 
   factory ProjectDefinition.fromYaml(Map data) {
-    if (data['fields'] == null) {
+    if (!data.containsKey('fields')) {
       throw ArgumentError('Schema error: "fields" is required.');
     }
-    if (data['fields'] is! Map) {
+    if (data['fields'] != null && data['fields'] is! Map) {
       throw ArgumentError('Schema error: "fields" must be a map.');
     }
     if (data['states'] == null) {
@@ -39,7 +39,13 @@ class ProjectDefinition {
     if (statesRaw['transitions'] is! Map) {
       throw ArgumentError('Schema error: "states.transitions" must be a map.');
     }
-    final fieldsRaw = data['fields'] as Map;
+    final fieldsRaw = (data['fields'] as Map?) ?? const {};
+    if (fieldsRaw.containsKey('title')) {
+      throw ArgumentError(
+          'Schema error: "title" is a reserved top-level property and cannot be defined in fields. '
+          'Every ticket has a built-in required "title" — remove it from your schema. '
+          'Run "tka migrate" to upgrade legacy projects.');
+    }
     final fields = <String, FieldDefinition>{};
     for (final entry in fieldsRaw.entries) {
       final name = entry.key as String;

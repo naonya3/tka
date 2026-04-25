@@ -61,6 +61,7 @@ class TicketStore {
       final newTicket = Ticket(
         project: ticket.project,
         seq: seq,
+        title: ticket.title,
         status: ticket.status,
         fields: ticket.fields,
         createdAt: DateTime.now(),

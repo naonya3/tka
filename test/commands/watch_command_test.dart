@@ -106,11 +106,11 @@ void main() {
 
     test('extracts all statuses from project definition', () {
       File('${tmpDir.path}/myproj.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: myproj
 description: test
 fields:
-  title:
+  detail:
     type: string
 states:
   initial: todo
@@ -127,11 +127,11 @@ states:
 
     test('includes initial state even without transitions from it', () {
       File('${tmpDir.path}/simple.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: simple
 description: test
 fields:
-  title:
+  detail:
     type: string
 states:
   initial: open

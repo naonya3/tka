@@ -33,11 +33,10 @@ void main() {
   group('create', () {
     test('creates a ticket with required fields via --set', () async {
       writeProject('todo', '''
-version: 1
+version: 2
 name: todo
 description: Simple TODO
 fields:
-  title: { type: string, required: true }
   detail: { type: string }
 states:
   initial: open
@@ -57,17 +56,16 @@ states:
       expect(ticket.project, 'todo');
       expect(ticket.seq, 1);
       expect(ticket.status, 'open');
-      expect(ticket.fields['title'], 'First task');
+      expect(ticket.title, 'First task');
       expect(ticket.fields['detail'], isNull);
     });
 
     test('creates sequential tickets', () async {
       writeProject('todo', '''
-version: 1
+version: 2
 name: todo
 description: Simple TODO
 fields:
-  title: { type: string, required: true }
 states:
   initial: open
   transitions:
@@ -95,11 +93,10 @@ states:
 
     test('fails when required field missing', () async {
       writeProject('todo', '''
-version: 1
+version: 2
 name: todo
 description: Simple TODO
 fields:
-  title: { type: string, required: true }
 states:
   initial: open
   transitions:
@@ -116,11 +113,10 @@ states:
 
     test('fails when unknown field specified', () async {
       writeProject('todo', '''
-version: 1
+version: 2
 name: todo
 description: Simple TODO
 fields:
-  title: { type: string, required: true }
 states:
   initial: open
   transitions:
@@ -131,7 +127,7 @@ states:
         ..addCommand(CreateCommand(
             projectStore: projectStore, ticketStore: ticketStore, out: out));
       expect(
-          () => runner.run(['create', 'todo', '--set', 'unknown=value']),
+          () => runner.run(['create', 'todo', '--set', 'title=T', '--set', 'unknown=value']),
           throwsA(isA<ArgumentError>()));
     });
 
@@ -157,11 +153,10 @@ states:
 
     test('creates ticket with date field via --set', () async {
       writeProject('dated', '''
-version: 1
+version: 2
 name: dated
 description: With date
 fields:
-  title: { type: string, required: true }
   due: { type: date }
 states:
   initial: open
@@ -184,11 +179,10 @@ states:
 
     test('initializes list fields as empty list', () async {
       writeProject('dev', '''
-version: 1
+version: 2
 name: dev
 description: Dev project
 fields:
-  title: { type: string, required: true }
   history: { type: list }
 states:
   initial: backlog

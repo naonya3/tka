@@ -24,11 +24,10 @@ void main() {
     dataDir.createSync(recursive: true);
 
     File('${projectsDir.path}/test-project.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: test-project
 description: test
 fields:
-  title: { type: string, required: true }
   detail: { type: string }
   due: { type: date }
   quantity: { type: number }
@@ -45,8 +44,9 @@ states:
     final ticket = Ticket(
       project: 'test-project',
       seq: 1,
+      title: 'Original title',
       status: 'todo',
-      fields: {'title': 'Original title', 'detail': 'Original detail'},
+      fields: {'detail': 'Original detail'},
       createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
       updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
       createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -75,7 +75,7 @@ states:
     expect(json['updated_at'], isA<String>());
 
     final loaded = ticketStore.load('test-project', 1);
-    expect(loaded.fields['title'], equals('New title'));
+    expect(loaded.title, equals('New title'));
     expect(loaded.fields['detail'], equals('Original detail'));
   });
 
@@ -90,7 +90,7 @@ states:
     ]);
 
     final loaded = ticketStore.load('test-project', 1);
-    expect(loaded.fields['title'], equals('New title'));
+    expect(loaded.title, equals('New title'));
     expect(loaded.fields['detail'], equals('New detail'));
   });
 

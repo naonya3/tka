@@ -27,11 +27,10 @@ void main() {
           expect(def.name, name);
         });
 
-        test('has required title field', () {
+        test('does not declare title in fields (reserved top-level)', () {
           final yaml = loadYaml(projectTemplates[name]!) as Map;
           final def = ProjectDefinition.fromYaml(yaml);
-          expect(def.fields.containsKey('title'), isTrue);
-          expect(def.fields['title']!.required, isTrue);
+          expect(def.fields.containsKey('title'), isFalse);
         });
 
         test('has at least one state transition', () {

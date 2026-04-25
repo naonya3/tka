@@ -10,8 +10,9 @@ Ticket _makeTicket(String project, int seq, String status,
   return Ticket(
     project: project,
     seq: seq,
+    title: 'test ticket $seq',
     status: status,
-    fields: {'title': 'test ticket $seq'},
+    fields: {},
     createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
     updatedAt: DateTime.parse(updatedAtRaw),
     createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -74,7 +75,7 @@ void main() {
       final loaded = store.load('proj', 2);
       expect(loaded.id, equals('proj-002'));
       expect(loaded.status, equals('in_progress'));
-      expect(loaded.fields['title'], equals('test ticket 2'));
+      expect(loaded.title, equals('test ticket 2'));
     });
 
     test('throws for non-existing ticket', () {

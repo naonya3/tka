@@ -3,13 +3,12 @@ import 'package:test/test.dart';
 import 'package:tka/store/project_store.dart';
 
 const _yamlContent = '''
-version: 1
+version: 2
 name: test-project
 description: Test
 fields:
-  title:
+  detail:
     type: string
-    required: true
 states:
   initial: todo
   transitions:
@@ -35,11 +34,11 @@ void main() {
 
     final def = store.load('test-project');
 
-    expect(def.version, 1);
+    expect(def.version, 2);
     expect(def.name, 'test-project');
     expect(def.description, 'Test');
-    expect(def.fields.containsKey('title'), isTrue);
-    expect(def.fields['title']!.required, isTrue);
+    expect(def.fields.containsKey('detail'), isTrue);
+    expect(def.fields.containsKey('title'), isFalse);
     expect(def.stateMachine.initial, 'todo');
     expect(def.stateMachine.canTransition('todo', 'done'), isTrue);
   });

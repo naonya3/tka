@@ -50,8 +50,9 @@ For long or multiline text, use pipe or file instead of inline value:
       throw UsageException('No fields to update.', usage);
     }
 
+    final (newTitle, fieldOptions) = extractTitleFromSetOptions(setOptions);
     final changedFields =
-        buildFieldsFromSetOptions(setOptions, projectDef.fields);
+        buildFieldsFromSetOptions(fieldOptions, projectDef.fields);
 
     final newFields = Map<String, dynamic>.from(ticket.fields);
     newFields.addAll(changedFields);
@@ -67,6 +68,7 @@ For long or multiline text, use pipe or file instead of inline value:
     final updated = Ticket(
       project: ticket.project,
       seq: ticket.seq,
+      title: newTitle ?? ticket.title,
       status: ticket.status,
       fields: newFields,
       createdAt: ticket.createdAt,

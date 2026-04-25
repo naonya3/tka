@@ -48,7 +48,7 @@ Use --field to get a single field value as raw text (lists output as JSON array)
     // --field mode: output raw field value
     final fieldName = argResults!['field'] as String?;
     if (fieldName != null) {
-      final value = ticket.fields[fieldName];
+      final value = fieldName == 'title' ? ticket.title : ticket.fields[fieldName];
       if (value == null) {
         _out.writeln('');
       } else if (value is List) {

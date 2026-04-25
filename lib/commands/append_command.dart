@@ -73,6 +73,7 @@ For long or multiline text, use pipe or file instead of inline value:
     final updated = Ticket(
       project: ticket.project,
       seq: ticket.seq,
+      title: ticket.title,
       status: ticket.status,
       fields: newFields,
       createdAt: ticket.createdAt,

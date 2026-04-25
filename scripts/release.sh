@@ -1,7 +1,7 @@
 #!/bin/bash
 TICKET_JSON=$(tka --base "$TKA_BASE_PATH" show "$TKA_TICKET_ID")
 WORKTREE=$(echo "$TICKET_JSON" | jq -r '.fields.worktree')
-TITLE=$(echo "$TICKET_JSON" | jq -r '.fields.title')
+TITLE=$(echo "$TICKET_JSON" | jq -r '.title')
 
 # Repo root is parent of .tka directory
 REPO_ROOT=$(dirname "$TKA_BASE_PATH")

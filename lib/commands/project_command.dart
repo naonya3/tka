@@ -300,6 +300,9 @@ To edit an existing project, modify the YAML file at: \$(tka root)/projects/<nam
   void run() {
     final schema = {
       'description': 'Project definition schema for tka project add --schema',
+      'reserved_fields_note':
+          '"title" is a reserved top-level ticket property and must not be defined in fields. '
+          'Every ticket has a built-in required title set via "tka create --set title=...".',
       'format': {
         'description': 'string (optional)',
         'fields': {

@@ -61,7 +61,7 @@ Examples:
       'updated_at': '"updated_at" is a meta field. Use --sort updated_at instead.',
     };
     for (final (field, _) in wherePairs) {
-      if (metaHints.containsKey(field)) {
+      if (field != 'title' && metaHints.containsKey(field)) {
         throw Exception('"$field" is not a field. ${metaHints[field]}');
       }
     }
@@ -70,8 +70,9 @@ Examples:
     final customFields = projectDef.fields.keys.toSet();
 
     for (final (field, _) in wherePairs) {
+      if (field == 'title') continue;
       if (!metaHints.containsKey(field) && !customFields.contains(field)) {
-        final available = customFields.toList()..sort();
+        final available = ['title', ...customFields]..sort();
         throw Exception(
             'Unknown field in --where: $field. Available: ${available.join(', ')}');
       }
@@ -80,7 +81,7 @@ Examples:
     final sortKey = argResults!['sort'] as String?;
     if (sortKey != null) {
       final rawKey = sortKey.startsWith('-') ? sortKey.substring(1) : sortKey;
-      const builtInSortFields = {'id', 'seq', 'status', 'created_at', 'updated_at'};
+      const builtInSortFields = {'id', 'seq', 'status', 'title', 'created_at', 'updated_at'};
       if (!builtInSortFields.contains(rawKey) && !customFields.contains(rawKey)) {
         final available = [...builtInSortFields, ...customFields]..sort();
         throw Exception(
@@ -129,7 +130,7 @@ Examples:
     if (wherePairs.isNotEmpty) {
       allTickets = allTickets.where((t) {
         for (final (field, value) in wherePairs) {
-          final fv = t.fields[field];
+          final fv = field == 'title' ? t.title : t.fields[field];
           if (fv == null) return false;
           final fvStr = fv.toString();
           final nFv = num.tryParse(fvStr);
@@ -182,7 +183,7 @@ Examples:
       throw Exception('--fields must specify at least one field name');
     }
 
-    const builtInFields = {'id', 'seq', 'project', 'status', 'created_at', 'updated_at'};
+    const builtInFields = {'id', 'seq', 'project', 'status', 'title', 'created_at', 'updated_at'};
     final unknown = outputFields
         .where((f) => !builtInFields.contains(f) && !customFields.contains(f))
         .toList();
@@ -204,6 +205,8 @@ Examples:
             entry['project'] = t.project;
           case 'status':
             entry['status'] = t.status;
+          case 'title':
+            entry['title'] = t.title;
           case 'created_at':
             entry['created_at'] = t.toJson()['created_at'];
           case 'updated_at':
@@ -226,6 +229,8 @@ Examples:
         return t.id;
       case 'status':
         return t.status;
+      case 'title':
+        return t.title;
       case 'created_at':
         return t.createdAt;
       case 'updated_at':

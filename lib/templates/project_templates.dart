@@ -1,10 +1,9 @@
 const Map<String, String> projectTemplates = {
   'sample': '''
-version: 1
+version: 2
 name: sample
 description: General-purpose task tracker. A minimal starting point for any workflow.
 fields:
-  title:  { type: string, required: true }
   detail: { type: string }
 states:
   initial: todo
@@ -17,11 +16,10 @@ states:
     in_progress: [done, todo]
 ''',
   'tdd': '''
-version: 1
+version: 2
 name: tdd
 description: Test-driven development cycle. Enforces the Red-Green-Refactor discipline.
 fields:
-  title:    { type: string, required: true }
   detail:   { type: string }
   test_cmd: { type: string }
   history:  { type: list }
@@ -40,11 +38,10 @@ states:
     refactor: [done, green]
 ''',
   'review-loop': '''
-version: 1
+version: 2
 name: review-loop
 description: Iterative review and revision cycle. Useful for writing, documentation, or code review.
 fields:
-  title:   { type: string, required: true }
   detail:  { type: string }
   target:  { type: string }
   history: { type: list }
@@ -63,11 +60,10 @@ states:
     approved: [done]
 ''',
   'bug-hunt': '''
-version: 1
+version: 2
 name: bug-hunt
 description: Bug lifecycle from report to verified fix. Tracks reproduction steps and expected vs actual behavior.
 fields:
-  title:     { type: string, required: true }
   reproduce: { type: string }
   expected:  { type: string }
   actual:    { type: string }
@@ -88,11 +84,10 @@ states:
     verifying: [done, fixing]
 ''',
   'agent-harness': '''
-version: 1
+version: 2
 name: agent-harness
 description: Multi-agent task orchestration. Tracks assignment, execution, and results across agents.
 fields:
-  title:   { type: string, required: true }
   detail:  { type: string }
   agent:   { type: string }
   priority:
@@ -118,11 +113,10 @@ states:
     blocked: [queued]
 ''',
   'evolve': '''
-version: 1
+version: 2
 name: evolve
 description: Hypothesis-driven improvement loop. Test ideas with measurable outcomes.
 fields:
-  title:      { type: string, required: true }
   hypothesis: { type: string }
   metric:     { type: string }
   baseline:   { type: number }

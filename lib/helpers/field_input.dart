@@ -52,6 +52,32 @@ Map<String, dynamic> buildFieldsFromSetOptions(
   return fields;
 }
 
+/// Extracts the reserved "title" key from --set options.
+/// Returns (resolvedTitle, remainingOptions). If title is not present,
+/// resolvedTitle is null.
+(String?, List<String>) extractTitleFromSetOptions(List<String> setOptions) {
+  String? title;
+  final remaining = <String>[];
+  for (final opt in setOptions) {
+    final idx = opt.indexOf('=');
+    if (idx < 0) {
+      remaining.add(opt);
+      continue;
+    }
+    final key = opt.substring(0, idx);
+    if (key != 'title') {
+      remaining.add(opt);
+      continue;
+    }
+    final resolved = resolveFieldValue(opt.substring(idx + 1));
+    if (resolved == null || resolved.trim().isEmpty) {
+      throw FormatException('title cannot be empty');
+    }
+    title = resolved;
+  }
+  return (title, remaining);
+}
+
 String? resolveFieldValue(String? raw) {
   if (raw == null) return null;
   if (raw == '-') {

@@ -50,11 +50,10 @@ void main() {
   group('project show', () {
     test('shows project details as JSON', () async {
       writeProject('demo', '''
-version: 1
+version: 2
 name: demo
 description: Demo project
 fields:
-  title: { type: string, required: true }
   detail: { type: string }
   due: { type: date }
 states:
@@ -71,8 +70,7 @@ states:
       final json = jsonDecode(output[0]) as Map<String, dynamic>;
       expect(json['name'], 'demo');
       expect(json['description'], 'Demo project');
-      expect(json['fields']['title']['type'], 'string');
-      expect(json['fields']['title']['required'], true);
+      expect(json['fields'].containsKey('title'), isFalse);
       expect(json['fields']['detail']['type'], 'string');
       expect(json['fields']['detail']['required'], false);
       expect(json['fields']['due']['type'], 'date');
@@ -83,11 +81,11 @@ states:
 
     test('shows verify info in transitions JSON', () async {
       writeProject('verify-show', '''
-version: 1
+version: 2
 name: verify-show
 description: Verify show test
 fields:
-  title: { type: string, required: true }
+  detail: { type: string }
 states:
   initial: todo
   transitions:
@@ -232,7 +230,6 @@ states:
       final schema = jsonEncode({
         'description': 'Test project',
         'fields': {
-          'title': {'type': 'string', 'required': true},
           'count': {'type': 'number'},
         },
         'states': {
@@ -254,9 +251,29 @@ states:
       final def = store.load('from-schema');
       expect(def.name, 'from-schema');
       expect(def.description, 'Test project');
-      expect(def.fields['title']!.required, true);
+      expect(def.fields.containsKey('title'), isFalse);
       expect(def.fields['count']!.type.name, 'number');
       expect(def.stateMachine.initial, 'open');
+    });
+
+    test('rejects schema with title in fields', () async {
+      final output = <String>[];
+      final schema = jsonEncode({
+        'fields': {
+          'title': {'type': 'string', 'required': true},
+        },
+        'states': {
+          'initial': 'open',
+          'transitions': {'open': ['done']},
+        },
+      });
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      expect(
+        () => runner.run(['project', 'add', 'with-title', '--schema', schema]),
+        throwsA(isA<ArgumentError>().having(
+            (e) => e.toString(), 'message', contains('reserved'))),
+      );
     });
 
     test('creates project from stdin with --schema -', () async {
@@ -264,7 +281,7 @@ states:
       final schema = jsonEncode({
         'description': 'Piped',
         'fields': {
-          'title': {'type': 'string', 'required': true},
+          'detail': {'type': 'string'},
         },
         'states': {
           'initial': 'new',
@@ -290,7 +307,7 @@ states:
       final schema = jsonEncode({
         'description': 'テストプロジェクト',
         'fields': {
-          'title': {'type': 'string', 'required': true},
+          'detail': {'type': 'string'},
         },
         'states': {
           'initial': 'new',
@@ -315,7 +332,7 @@ states:
       final output = <String>[];
       final schema = jsonEncode({
         'fields': {
-          'title': {'type': 'string', 'required': true},
+          'detail': {'type': 'string'},
         },
         'states': {
           'initial': 'todo',
@@ -344,7 +361,7 @@ states:
       final schema = jsonEncode({
         'description': 'Guide test project',
         'fields': {
-          'title': {'type': 'string', 'required': true},
+          'detail': {'type': 'string'},
         },
         'states': {
           'initial': 'todo',
@@ -387,7 +404,7 @@ states:
       final output = <String>[];
       final schema = jsonEncode({
         'fields': {
-          'title': {'type': 'invalid_type'},
+          'badfield': {'type': 'invalid_type'},
         },
         'states': {
           'initial': 'open',
@@ -406,7 +423,7 @@ states:
       final output = <String>[];
       final schema = jsonEncode({
         'fields': {
-          'title': {'type': 'string', 'required': true},
+          'detail': {'type': 'string'},
           'priority': {
             'type': 'enum',
             'values': ['p0', 'p1', 'p2'],
@@ -546,11 +563,11 @@ states:
   group('project workflow', () {
     test('returns workflow with guides and transitions', () async {
       writeProject('wf', '''
-version: 1
+version: 2
 name: wf
 description: workflow test
 fields:
-  title: { type: string, required: true }
+  detail: { type: string }
 states:
   initial: todo
   guide:
@@ -621,11 +638,11 @@ states:
 }
 
 String _simpleProject(String name) => '''
-version: 1
+version: 2
 name: $name
 description: $name project
 fields:
-  title: { type: string, required: true }
+  detail: { type: string }
 states:
   initial: todo
   transitions:

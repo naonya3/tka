@@ -21,7 +21,7 @@ tka init
 tka project schema
 
 # Create a project from JSON (AI-friendly)
-tka project add my-tasks --schema '{"fields":{"title":{"type":"string","required":true},"detail":{"type":"string"}},"states":{"initial":"todo","transitions":{"todo":["in_progress"],"in_progress":["done","todo"]}}}'
+tka project add my-tasks --schema '{"fields":{"detail":{"type":"string"}},"states":{"initial":"todo","transitions":{"todo":["in_progress"],"in_progress":["done","todo"]}}}'
 
 # Or use a built-in template
 tka project add my-tasks --template tdd
@@ -259,7 +259,6 @@ tka project schema
 tka project add bugs --schema '{
   "description": "Bug tracker",
   "fields": {
-    "title":    {"type": "string", "required": true},
     "severity": {"type": "enum", "values": ["critical", "major", "minor"]},
     "detail":   {"type": "string"},
     "history":  {"type": "list"}
@@ -275,6 +274,8 @@ tka project add bugs --schema '{
   }
 }'
 ```
+
+**Reserved top-level**: every ticket has a built-in required `title` (set via `tka create --set title=...`). It is not declared in `fields`.
 
 **Field types**: `string`, `number`, `date` (YYYY-MM-DD), `list` (append-only), `enum` (requires `values`)
 
@@ -306,6 +307,12 @@ make          # Build
 make install  # Install to ~/.local/bin
 make test     # Run tests
 ```
+
+## Migration
+
+Schema upgrades occasionally require restructuring existing `.tka/` data. Run `tka migrate` (or `tka migrate --dry-run` to preview) — it walks every project YAML and ticket JSON in `.tka/`, applies all required transformations, and is idempotent.
+
+The latest migration moves the universally-required `title` from per-schema `fields.title` to a top-level ticket property, and bumps project schema `version: 1 → 2`.
 
 ## License
 

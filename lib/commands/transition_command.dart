@@ -69,9 +69,15 @@ Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
     }
 
     // Validate --set and --append options early (before verify)
+    String? newTitle;
     Map<String, dynamic>? changedFields;
     if (setOptions.isNotEmpty) {
-      changedFields = buildFieldsFromSetOptions(setOptions, projectDef.fields);
+      final (extractedTitle, fieldOptions) =
+          extractTitleFromSetOptions(setOptions);
+      newTitle = extractedTitle;
+      if (fieldOptions.isNotEmpty) {
+        changedFields = buildFieldsFromSetOptions(fieldOptions, projectDef.fields);
+      }
     }
 
     final appendEntries = <String, String>{};
@@ -158,6 +164,7 @@ Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
     final updated = Ticket(
       project: current.project,
       seq: current.seq,
+      title: newTitle ?? current.title,
       status: targetStatus,
       fields: newFields,
       createdAt: current.createdAt,

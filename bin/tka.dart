@@ -13,6 +13,7 @@ import 'package:tka/commands/watch_command.dart';
 import 'package:tka/commands/archive_command.dart';
 import 'package:tka/commands/root_command.dart';
 import 'package:tka/commands/init_command.dart';
+import 'package:tka/commands/migrate_command.dart';
 import 'package:tka/resolve_base_path.dart';
 import 'package:tka/store/project_store.dart';
 import 'package:tka/store/ticket_store.dart';
@@ -132,7 +133,8 @@ Long text: use pipe (--set field=-) or file (--set field=@path):
     ..addCommand(WatchCommand(
         projectStore: projectStore,
         ticketStore: ticketStore,
-        dataPath: '$basePath/data'));
+        dataPath: '$basePath/data'))
+    ..addCommand(MigrateCommand(basePath: basePath));
 
   runner.argParser.addOption('base', help: 'Path to .tka directory');
 
@@ -184,6 +186,7 @@ Commands:
   archive         Archive a ticket
   watch           Real-time ticket dashboard
   root            Print resolved .tka path
+  migrate         Migrate legacy .tka data to current schema
 
 Examples:
   tka init

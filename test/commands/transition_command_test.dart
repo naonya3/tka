@@ -24,11 +24,10 @@ void main() {
     dataDir.createSync(recursive: true);
 
     File('${projectsDir.path}/game-dev.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: game-dev
 description: test
 fields:
-  title: { type: string, required: true }
 states:
   initial: backlog
   transitions:
@@ -45,7 +44,7 @@ states:
       project: 'game-dev',
       seq: 1,
       status: 'backlog',
-      fields: {'title': 'Test ticket'},
+      title: 'Test ticket', fields: {},
       createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
       updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
       createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -154,11 +153,10 @@ states:
       dataDir.createSync(recursive: true);
 
       File('${projectsDir.path}/tdd.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: tdd
 description: test
 fields:
-  title: { type: string, required: true }
 states:
   initial: todo
   transitions:
@@ -177,7 +175,7 @@ states:
         project: 'tdd',
         seq: 1,
         status: 'red',
-        fields: {'title': 'Test'},
+        title: 'Test', fields: {},
         createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -209,11 +207,10 @@ states:
     test('verify command receives TKA environment variables', () async {
       // Create project with verify that checks env vars
       File('${verifyTmpDir.path}/projects/envcheck.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: envcheck
 description: test
 fields:
-  title: { type: string, required: true }
 states:
   initial: todo
   transitions:
@@ -227,7 +224,7 @@ states:
         project: 'envcheck',
         seq: 1,
         status: 'todo',
-        fields: {'title': 'Test'},
+        title: 'Test', fields: {},
         createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -251,11 +248,10 @@ states:
     test('transition fails when verify command fails', () async {
       // Create project with failing verify
       File('${verifyTmpDir.path}/projects/fail.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: fail
 description: test
 fields:
-  title: { type: string, required: true }
 states:
   initial: todo
   transitions:
@@ -269,7 +265,7 @@ states:
         project: 'fail',
         seq: 1,
         status: 'todo',
-        fields: {'title': 'Test'},
+        title: 'Test', fields: {},
         createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -316,11 +312,10 @@ states:
       Process.runSync('chmod', ['+x', script.path]);
 
       File('${projectsDir.path}/cwdcheck.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: cwdcheck
 description: test
 fields:
-  title: { type: string, required: true }
 states:
   initial: todo
   transitions:
@@ -337,7 +332,7 @@ states:
         project: 'cwdcheck',
         seq: 1,
         status: 'todo',
-        fields: {'title': 'Test'},
+        title: 'Test', fields: {},
         createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -388,11 +383,10 @@ with open('\$TICKET_FILE', 'w') as f: json.dump(d, f)
       Process.runSync('chmod', ['+x', script.path]);
 
       File('${projectsDir.path}/updproj.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: updproj
 description: test
 fields:
-  title: { type: string, required: true }
   worktree: { type: string }
 states:
   initial: todo
@@ -411,7 +405,7 @@ states:
         project: 'updproj',
         seq: 1,
         status: 'todo',
-        fields: {'title': 'Test'},
+        title: 'Test', fields: {},
         createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -440,11 +434,10 @@ states:
 
     test('verify output included in success result', () async {
       File('${verifyTmpDir.path}/projects/echo-proj.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: echo-proj
 description: test
 fields:
-  title: { type: string, required: true }
 states:
   initial: todo
   transitions:
@@ -458,7 +451,7 @@ states:
         project: 'echo-proj',
         seq: 1,
         status: 'todo',
-        fields: {'title': 'Test'},
+        title: 'Test', fields: {},
         createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -481,11 +474,10 @@ states:
 
     test('verify output included in failure error', () async {
       File('${verifyTmpDir.path}/projects/failout.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: failout
 description: test
 fields:
-  title: { type: string, required: true }
 states:
   initial: todo
   transitions:
@@ -499,7 +491,7 @@ states:
         project: 'failout',
         seq: 1,
         status: 'todo',
-        fields: {'title': 'Test'},
+        title: 'Test', fields: {},
         createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -545,7 +537,7 @@ states:
         project: 'tdd',
         seq: 2,
         status: 'todo',
-        fields: {'title': 'No verify'},
+        title: 'No verify', fields: {},
         createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -570,11 +562,10 @@ states:
     // Replace project with one that has guides
     final projectsDir = Directory('${tmpDir.path}/projects');
     File('${projectsDir.path}/game-dev.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: game-dev
 description: test
 fields:
-  title: { type: string, required: true }
 states:
   initial: backlog
   transitions:
@@ -619,11 +610,10 @@ states:
       dataDir.createSync(recursive: true);
 
       File('${projectsDir.path}/setproj.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: setproj
 description: test
 fields:
-  title: { type: string, required: true }
   verdict: { type: string }
   priority: { type: number }
   history: { type: list }
@@ -641,7 +631,7 @@ states:
         project: 'setproj',
         seq: 1,
         status: 'todo',
-        fields: {'title': 'Test ticket'},
+        title: 'Test ticket', fields: {},
         createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -750,11 +740,10 @@ states:
       dataDir.createSync(recursive: true);
 
       File('${projectsDir.path}/appproj.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: appproj
 description: test
 fields:
-  title: { type: string, required: true }
   history: { type: list }
   tags: { type: list }
   verdict: { type: string }
@@ -772,7 +761,7 @@ states:
         project: 'appproj',
         seq: 1,
         status: 'todo',
-        fields: {'title': 'Test ticket', 'history': ['created']},
+        title: 'Test ticket', fields: {'history': ['created']},
         createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -874,11 +863,10 @@ states:
       dataDir.createSync(recursive: true);
 
       File('${projectsDir.path}/combo.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: combo
 description: test
 fields:
-  title: { type: string, required: true }
   verdict: { type: string }
   history: { type: list }
 states:
@@ -895,7 +883,7 @@ states:
         project: 'combo',
         seq: 1,
         status: 'todo',
-        fields: {'title': 'Test ticket', 'history': ['created']},
+        title: 'Test ticket', fields: {'history': ['created']},
         createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -946,11 +934,10 @@ states:
       dataDir.createSync(recursive: true);
 
       File('${projectsDir.path}/vset.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: vset
 description: test
 fields:
-  title: { type: string, required: true }
   verdict: { type: string }
   history: { type: list }
 states:
@@ -973,7 +960,7 @@ states:
         project: 'vset',
         seq: 1,
         status: 'todo',
-        fields: {'title': 'Test ticket'},
+        title: 'Test ticket', fields: {},
         createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
         createdAtRaw: '2026-04-01T10:00:00+09:00',

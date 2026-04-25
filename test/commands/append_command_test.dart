@@ -24,11 +24,10 @@ void main() {
     dataDir.createSync(recursive: true);
 
     File('${projectsDir.path}/game-dev.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: game-dev
 description: test
 fields:
-  title: { type: string, required: true }
   detail: { type: string }
   history: { type: list }
 states:
@@ -43,8 +42,9 @@ states:
     final ticket = Ticket(
       project: 'game-dev',
       seq: 1,
+      title: 'Test ticket',
       status: 'backlog',
-      fields: {'title': 'Test ticket', 'history': ['Initial entry']},
+      fields: {'history': ['Initial entry']},
       createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
       updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
       createdAtRaw: '2026-04-01T10:00:00+09:00',
@@ -91,8 +91,9 @@ states:
     final ticket = Ticket(
       project: 'game-dev',
       seq: 2,
+      title: 'No history ticket',
       status: 'backlog',
-      fields: {'title': 'No history ticket'},
+      fields: {},
       createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
       updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
       createdAtRaw: '2026-04-01T10:00:00+09:00',

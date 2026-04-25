@@ -6,9 +6,9 @@ void main() {
     'id': 'game-dev-003',
     'project': 'game-dev',
     'seq': 3,
+    'title': 'Implement login feature',
     'status': 'in_progress',
     'fields': {
-      'title': 'Implement login feature',
       'detail': 'Add OAuth2 authentication flow',
       'prompt': null,
       'history': [
@@ -25,8 +25,8 @@ void main() {
       final t = Ticket.fromJson(sampleJson);
       expect(t.project, 'game-dev');
       expect(t.seq, 3);
+      expect(t.title, 'Implement login feature');
       expect(t.status, 'in_progress');
-      expect(t.fields['title'], 'Implement login feature');
       expect(t.fields['detail'], 'Add OAuth2 authentication flow');
       expect(t.createdAt, DateTime.parse('2026-04-01T10:00:00+09:00'));
       expect(t.updatedAt, DateTime.parse('2026-04-04T14:30:00+09:00'));
@@ -101,8 +101,8 @@ void main() {
       expect(json['id'], 'game-dev-003');
       expect(json['project'], 'game-dev');
       expect(json['seq'], 3);
+      expect(json['title'], 'Implement login feature');
       expect(json['status'], 'in_progress');
-      expect(json['fields']['title'], 'Implement login feature');
       expect(json['fields']['prompt'], isNull);
       expect(json['fields']['history'], hasLength(2));
       expect(json['created_at'], '2026-04-01T10:00:00+09:00');
@@ -115,8 +115,8 @@ void main() {
       expect(t2.id, t1.id);
       expect(t2.project, t1.project);
       expect(t2.seq, t1.seq);
+      expect(t2.title, t1.title);
       expect(t2.status, t1.status);
-      expect(t2.fields['title'], t1.fields['title']);
       expect(t2.fields['prompt'], t1.fields['prompt']);
       expect(t2.createdAt, t1.createdAt);
       expect(t2.updatedAt, t1.updatedAt);

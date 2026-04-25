@@ -14,13 +14,14 @@ Ticket _makeTicket(String project, int seq, String status,
     Map<String, dynamic>? extraFields,
     String? createdAt,
     String? updatedAt}) {
-  final fields = <String, dynamic>{'title': title ?? 'ticket $seq'};
+  final fields = <String, dynamic>{};
   if (extraFields != null) fields.addAll(extraFields);
   final cat = createdAt ?? '2026-04-01T10:00:00+09:00';
   final uat = updatedAt ?? '2026-04-01T10:00:00+09:00';
   return Ticket(
     project: project,
     seq: seq,
+    title: title ?? 'ticket $seq',
     status: status,
     fields: fields,
     createdAt: DateTime.parse(cat),
@@ -33,11 +34,11 @@ Ticket _makeTicket(String project, int seq, String status,
 void _writeProjectYaml(String projectsDir, String name,
     {String? extraFields}) {
   File('$projectsDir/$name.yaml').writeAsStringSync('''
-version: 1
+version: 2
 name: $name
 description: test
 fields:
-  title: { type: string, required: true }
+  detail: { type: string }
 ${extraFields ?? ''}
 states:
   initial: todo

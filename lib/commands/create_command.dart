@@ -45,7 +45,12 @@ Note: always quote --set values in zsh (e.g. --set 'field=value').''';
     final project = projectStore.load(projectName);
 
     final setOptions = argResults!['set'] as List<String>;
-    final fields = buildFieldsFromSetOptions(setOptions, project.fields);
+    final (title, fieldOptions) = extractTitleFromSetOptions(setOptions);
+    if (title == null) {
+      throw UsageException(
+          'title is required. Pass it via --set title=...', usage);
+    }
+    final fields = buildFieldsFromSetOptions(fieldOptions, project.fields);
 
     final errors = SchemaValidator.validate(fields, project.fields);
     if (errors.isNotEmpty) {
@@ -62,6 +67,7 @@ Note: always quote --set values in zsh (e.g. --set 'field=value').''';
     final placeholder = Ticket(
       project: projectName,
       seq: 0,
+      title: title,
       status: project.stateMachine.initial,
       fields: fields,
       createdAt: DateTime.now(),

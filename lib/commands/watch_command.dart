@@ -71,7 +71,7 @@ TAB: switch project  1-9: toggle status filter  0: reset filters  q: quit''';
           .map((t) => WatchTicketData(
                 id: t.id,
                 status: t.status,
-                title: (t.fields['title'] as String?) ?? '',
+                title: t.title,
               ))
           .toList();
 

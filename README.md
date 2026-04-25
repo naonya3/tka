@@ -1,12 +1,14 @@
 # tka
 
-Ticket for Agents — a schema-driven ticket management CLI.
+**Ticket for Agents** — a workflow declaration DSL for AI agents.
 
-AI agents need task management too. But they can't read Kanban boards or parse Markdown tables. tka gives them a structured, JSON-in/JSON-out interface to create, track, and transition tickets — so they stay on task without human babysitting.
+The shape is "ticket management": you create, list, transition, archive. The substance is workflow declaration: every project is a state machine with per-state guides, optional verify gates, schema-validated fields, and terminal states. Tickets are execution instances of a workflow you declared up front.
+
+`.tka/` checked into your repo becomes the **executable contract** that agents follow when they work in that codebase. AGENTS.md / CLAUDE.md describe how you'd like agents to behave; a tka schema *enforces* it via verify hooks and only-allowed-transitions. AI agents need this kind of structure because they can't read Kanban boards or infer your intent from a Markdown table — so tka gives them a JSON-in/JSON-out interface and an explicit workflow to follow.
 
 Every output is machine-readable JSON on stdout. Errors go to stderr as JSON. No human-friendly formatting — agents parse it directly and move on.
 
-But there's one exception: `tka watch` gives you a real-time terminal dashboard to see what your agents are up to. It's surprisingly fun to watch.
+There's one exception: `tka watch` gives you a real-time terminal dashboard to see what your agents are up to. It's surprisingly fun to watch.
 
 ## Quick Start
 
@@ -14,18 +16,18 @@ But there's one exception: `tka watch` gives you a real-time terminal dashboard 
 # Install
 make && make install
 
-# Initialize
+# Initialize a .tka in this repo
 tka init
 
-# Check the schema spec so you know what to build
-tka project schema
-
-# Create a project from JSON (AI-friendly)
-tka project add my-tasks --schema '{"fields":{"detail":{"type":"string"}},"states":{"initial":"todo","transitions":{"todo":["in_progress"],"in_progress":["done","todo"]}}}'
-
-# Or use a built-in template
+# Declare your first workflow — pick a built-in pattern...
 tka project add my-tasks --template tdd
+
+# ...or read the schema spec and design one for your workflow
+tka project schema
+tka project add my-tasks --schema '{"fields":{"detail":{"type":"string"}},"states":{"initial":"todo","transitions":{"todo":["in_progress"],"in_progress":["done","todo"]}}}'
 ```
+
+Templates (`tka project templates`) are a small library of declared workflow patterns — TDD discipline, bug investigation loop, review iteration, hypothesis testing — that agents can follow directly. If none match your needs, design a custom schema.
 
 ## Usage
 

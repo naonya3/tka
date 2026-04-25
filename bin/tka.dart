@@ -81,8 +81,9 @@ Future<void> main(List<String> args) async {
   final projectStore = ProjectStore('$basePath/projects');
   final ticketStore = TicketStore('$basePath/data');
 
-  final runner = CommandRunner('tka', '''Ticket for Agents — schema-driven ticket management CLI.
+  final runner = CommandRunner('tka', '''Ticket for Agents — workflow declaration DSL for AI agents.
 
+Projects declare a state machine; tickets are execution instances of it.
 All output is machine-readable JSON on stdout. Errors go to stderr as JSON.
 No human-friendly formatting — designed to be consumed by AI agents directly.
 
@@ -171,8 +172,9 @@ Long text: use pipe (--set field=-) or file (--set field=@path):
   }
 }
 
-const _helpText = '''Ticket for Agents — schema-driven ticket management CLI.
+const _helpText = '''Ticket for Agents — workflow declaration DSL for AI agents.
 
+Projects declare a state machine; tickets are execution instances of it.
 All output is machine-readable JSON on stdout. Errors go to stderr as JSON.
 No human-friendly formatting — designed to be consumed by AI agents directly.
 

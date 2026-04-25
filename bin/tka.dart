@@ -99,6 +99,7 @@ Examples:
   tka list -p shopping --archived
   tka show <id>
   tka show <id> --pretty
+  tka show <id> --field status      # raw value of any built-in or custom field
   tka update <id> --set title="New title"
   tka transition <id> --to done
   tka append <id> --field history --value "Done"

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:args/command_runner.dart';
 
 class InitException implements Exception {
   final String message;
@@ -30,4 +31,23 @@ class InitCommand {
 
   static const usage =
       'tka init    Initialize .tka/ in current directory';
+}
+
+/// Stub Command that exists only so `init` appears in `tka -h`'s
+/// "Available commands:" listing. Actual execution is special-cased in
+/// bin/tka.dart before the runner is invoked, because init must run
+/// without a resolved .tka base path.
+class InitStubCommand extends Command<void> {
+  @override
+  final String name = 'init';
+  @override
+  final String description = 'Initialize .tka/ in the current directory.';
+
+  @override
+  void run() {
+    // Unreachable in normal flow — bin/tka.dart intercepts `init` before
+    // delegating to CommandRunner. Kept as a defensive no-op fallback.
+    throw UnimplementedError(
+        'init is intercepted by the entry-point; this stub should not run.');
+  }
 }

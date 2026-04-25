@@ -12,7 +12,7 @@ import 'package:tka/commands/append_command.dart';
 import 'package:tka/commands/watch_command.dart';
 import 'package:tka/commands/archive_command.dart';
 import 'package:tka/commands/root_command.dart';
-import 'package:tka/commands/init_command.dart';
+import 'package:tka/commands/init_command.dart' show InitCommand, InitException, InitStubCommand;
 import 'package:tka/commands/migrate_command.dart';
 import 'package:tka/resolve_base_path.dart';
 import 'package:tka/store/project_store.dart';
@@ -135,7 +135,8 @@ Long text: use pipe (--set field=-) or file (--set field=@path):
         projectStore: projectStore,
         ticketStore: ticketStore,
         dataPath: '$basePath/data'))
-    ..addCommand(MigrateCommand(basePath: basePath));
+    ..addCommand(MigrateCommand(basePath: basePath))
+    ..addCommand(InitStubCommand());
 
   runner.argParser.addOption('base', help: 'Path to .tka directory');
 

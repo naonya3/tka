@@ -31,6 +31,12 @@ void main() {
       expect(baseIndex, lessThan(commandsIndex),
           reason: '--base should appear before Available commands');
     });
+
+    test('init appears in Available commands listing', () {
+      final output = result.stdout as String;
+      expect(output, matches(RegExp(r'^\s+init\s+Initialize \.tka/', multiLine: true)),
+          reason: 'init should appear in the Available commands block, not only in Examples');
+    });
   });
 
   group('fallback help text (without .tka)', () {

@@ -31,7 +31,7 @@ tka project add my-tasks --template tdd
 
 ```bash
 # --- Project management ---
-tka project list                          # ["my-tasks", "bugs"]
+tka project list                          # [{"name":"my-tasks","description":"..."}, ...]
 tka project show <name>                   # Full definition as JSON
 tka project workflow <name>               # State machine with guides and transitions
 tka project schema                        # Schema spec for --schema input

@@ -34,7 +34,7 @@ void main() {
       expect(decoded, isEmpty);
     });
 
-    test('lists project names as JSON array', () async {
+    test('lists projects with name and description', () async {
       writeProject('alpha', _simpleProject('alpha'));
       writeProject('beta', _simpleProject('beta'));
       final output = <String>[];
@@ -43,7 +43,44 @@ void main() {
       await runner.run(['project', 'list']);
       expect(output.length, 1);
       final decoded = jsonDecode(output[0]) as List;
-      expect(decoded..sort(), ['alpha', 'beta']);
+      expect(decoded.length, 2);
+      final names = decoded.map((e) => e['name']).toSet();
+      expect(names, {'alpha', 'beta'});
+      for (final entry in decoded) {
+        expect(entry, contains('description'));
+        expect(entry['description'], '${entry['name']} project');
+      }
+    });
+
+    test('list emits empty description when project YAML has none', () async {
+      writeProject('nodesc', '''
+version: 2
+name: nodesc
+fields:
+  detail: { type: string }
+states:
+  initial: todo
+  transitions:
+    todo: [done]
+''');
+      final output = <String>[];
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'list']);
+      final decoded = jsonDecode(output[0]) as List;
+      expect(decoded[0]['name'], 'nodesc');
+      expect(decoded[0]['description'], '');
+    });
+
+    test('list does not crash on malformed project YAML', () async {
+      File('$basePath/projects/broken.yaml').writeAsStringSync('not: valid: yaml: at all');
+      final output = <String>[];
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'list']);
+      final decoded = jsonDecode(output[0]) as List;
+      expect(decoded[0]['name'], 'broken');
+      expect(decoded[0]['description'], '');
     });
   });
 
@@ -470,10 +507,10 @@ states:
       output.clear();
       await runner.run(['project', 'list']);
       final list = jsonDecode(output[0]) as List;
-      expect(list, ['beta']);
+      expect(list.map((e) => e['name']).toList(), ['beta']);
     });
 
-    test('list --archived shows archived projects', () async {
+    test('list --archived shows archived projects with description', () async {
       writeProject('alpha', _simpleProject('alpha'));
       final output = <String>[];
       final runner = CommandRunner('tka', 'test')
@@ -482,7 +519,9 @@ states:
       output.clear();
       await runner.run(['project', 'list', '--archived']);
       final list = jsonDecode(output[0]) as List;
-      expect(list, ['alpha']);
+      expect(list.length, 1);
+      expect(list[0]['name'], 'alpha');
+      expect(list[0]['description'], 'alpha project');
     });
 
     test('fails for non-existing project', () async {

@@ -22,6 +22,16 @@ class ProjectStore {
     return ProjectDefinition.fromYaml(Map.from(yaml as Map));
   }
 
+  ProjectDefinition loadArchived(String name) {
+    final file = File(p.join(basePath, 'archived', '$name.yaml'));
+    if (!file.existsSync()) {
+      throw Exception('Archived project not found: $name');
+    }
+    final content = file.readAsStringSync();
+    final yaml = loadYaml(content);
+    return ProjectDefinition.fromYaml(Map.from(yaml as Map));
+  }
+
   List<String> list() {
     final dir = Directory(basePath);
     if (!dir.existsSync()) return [];

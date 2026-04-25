@@ -31,7 +31,7 @@ class _ProjectListCommand extends Command {
   @override
   final String name = 'list';
   @override
-  final String description = 'List projects. Use --archived to list archived projects. Output: JSON array of project names.';
+  final String description = 'List projects. Use --archived to list archived projects. Output: JSON array of {"name", "description"} objects.';
 
   final ProjectStore _store;
   final void Function(String) _printer;
@@ -43,8 +43,18 @@ class _ProjectListCommand extends Command {
   @override
   void run() {
     final archived = argResults!['archived'] as bool;
-    final projects = archived ? _store.listArchived() : _store.list();
-    _printer(jsonEncode(projects));
+    final names = archived ? _store.listArchived() : _store.list();
+    final result = names.map((name) {
+      String description = '';
+      try {
+        final def = archived ? _store.loadArchived(name) : _store.load(name);
+        description = def.description;
+      } catch (_) {
+        // Malformed project definition — emit empty description rather than fail.
+      }
+      return {'name': name, 'description': description};
+    }).toList();
+    _printer(jsonEncode(result));
   }
 }
 

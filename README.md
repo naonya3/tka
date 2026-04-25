@@ -139,7 +139,7 @@ states:
 When an agent runs `tka transition ticket-001 --to green`, tka executes `dart test` first. If tests fail, the transition is rejected:
 
 ```json
-{"error": "Verify failed for transition red → green. Command: dart test (exit code 1). Output: Expected 3 tests, found 0"}
+{"error":"Verify failed for transition red → green.","command":"dart test","exit_code":1,"output":"Expected 3 tests, found 0"}
 ```
 
 The agent reads the error and self-corrects — write the tests, run again.

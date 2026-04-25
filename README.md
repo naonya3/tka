@@ -30,7 +30,10 @@ In short: tka shines when the **primary user is an AI agent**. If a human is goi
 ## Quick Start
 
 ```bash
-# Install
+# Install via Homebrew (macOS arm64 / Linux x64)
+brew install naonya3/tap/tka
+
+# Or build from source (requires Dart SDK)
 make && make install
 
 # Initialize a .tka in this repo
@@ -347,13 +350,22 @@ Built-in templates (`tka project templates`) include both — copy from them whe
 
 Everything is plain files — no database, no server. Check `.tka/` into version control if you want history, or `.gitignore` it if you don't.
 
-## Build
+## Install
+
+```bash
+# Homebrew (macOS arm64 / Linux x64)
+brew install naonya3/tap/tka
+```
+
+## Build from source
 
 ```bash
 make          # Build
 make install  # Install to ~/.local/bin
 make test     # Run tests
 ```
+
+Releases are tagged automatically via `tka transition <id> --to released`. GitHub Actions builds cross-platform binaries, attaches them to the GitHub Release, and the [`naonya3/homebrew-tap`](https://github.com/naonya3/homebrew-tap) Formula is bumped automatically.
 
 ## Migration
 

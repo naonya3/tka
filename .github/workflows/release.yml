@@ -65,3 +65,81 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
           REPO: ${{ github.repository }}
         run: gh release create "$TAG_NAME" artifacts/* --repo "$REPO" --title "$TAG_NAME" --generate-notes
+
+  bump-homebrew-tap:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Compute checksums
+        id: sha
+        run: |
+          mac_arm_sha=$(sha256sum artifacts/tka-macos-arm64 | awk '{print $1}')
+          linux_x64_sha=$(sha256sum artifacts/tka-linux-x64 | awk '{print $1}')
+          echo "mac_arm=$mac_arm_sha" >> "$GITHUB_OUTPUT"
+          echo "linux_x64=$linux_x64_sha" >> "$GITHUB_OUTPUT"
+      - name: Check out homebrew-tap
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: naonya3/homebrew-tap
+          ssh-key: ${{ secrets.HOMEBREW_TAP_SSH_KEY }}
+          path: homebrew-tap
+      - name: Update Formula
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          MAC_ARM_SHA: ${{ steps.sha.outputs.mac_arm }}
+          LINUX_X64_SHA: ${{ steps.sha.outputs.linux_x64 }}
+        run: |
+          set -euo pipefail
+          version="${TAG_NAME#v}"
+          formula="homebrew-tap/Formula/tka.rb"
+          python3 - <<PY
+          import re, os
+          path = "$formula"
+          with open(path) as f:
+              text = f.read()
+          version = "$version"
+          mac_arm = "$MAC_ARM_SHA"
+          linux_x64 = "$LINUX_X64_SHA"
+          tag = "v" + version
+          text = re.sub(r'version "[^"]+"', f'version "{version}"', text, count=1)
+          text = re.sub(
+              r'releases/download/v[^/]+/tka-macos-arm64',
+              f'releases/download/{tag}/tka-macos-arm64',
+              text,
+          )
+          text = re.sub(
+              r'releases/download/v[^/]+/tka-linux-x64',
+              f'releases/download/{tag}/tka-linux-x64',
+              text,
+          )
+          # Replace sha256 lines that follow the macOS and Linux URLs.
+          def replace_block(text, anchor_url, new_sha):
+              pattern = re.compile(
+                  r'(url "https://github.com/naonya3/tka/' + anchor_url + r'"\s*\n\s*sha256 ")[0-9a-f]{64}(")',
+              )
+              return pattern.sub(rf'\g<1>{new_sha}\g<2>', text, count=1)
+          text = replace_block(text, f'releases/download/{tag}/tka-macos-arm64', mac_arm)
+          text = replace_block(text, f'releases/download/{tag}/tka-linux-x64', linux_x64)
+          with open(path, "w") as f:
+              f.write(text)
+          PY
+      - name: Commit and push
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          cd homebrew-tap
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "Formula already up to date for $TAG_NAME"
+            exit 0
+          fi
+          git add Formula/tka.rb
+          git commit -m "Bump tka to $TAG_NAME"
+          git push

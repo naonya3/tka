@@ -169,19 +169,22 @@ states:
   });
 
   group('project templates', () {
-    test('returns all 6 templates', () async {
+    test('returns templates wrapped with design-permission note', () async {
       final output = <String>[];
       final runner = CommandRunner('tka', 'test')
         ..addCommand(ProjectCommand(basePath, printer: output.add));
       await runner.run(['project', 'templates']);
       expect(output.length, 1);
-      final decoded = jsonDecode(output[0]) as List;
-      expect(decoded.length, 6);
-      final names = decoded.map((e) => e['name']).toSet();
+      final decoded = jsonDecode(output[0]) as Map<String, dynamic>;
+      expect(decoded['note'], isA<String>());
+      expect(decoded['note'], contains('design a custom schema'));
+      final list = decoded['templates'] as List;
+      expect(list.length, 6);
+      final names = list.map((e) => e['name']).toSet();
       expect(names, {
         'sample', 'tdd', 'review-loop', 'bug-hunt', 'agent-harness', 'evolve'
       });
-      for (final item in decoded) {
+      for (final item in list) {
         expect(item['description'], isNotEmpty);
       }
     });
@@ -258,6 +261,16 @@ states:
       await runner.run(['project', 'schema']);
       final json = jsonDecode(output[0]) as Map<String, dynamic>;
       expect(json['verify_cwd'], equals('Repository root (parent of .tka directory)'));
+    });
+
+    test('includes design_for_user_note encouraging custom schemas', () async {
+      final output = <String>[];
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'schema']);
+      final json = jsonDecode(output[0]) as Map<String, dynamic>;
+      expect(json['design_for_user_note'], isA<String>());
+      expect(json['design_for_user_note'], contains('custom schema'));
     });
   });
 

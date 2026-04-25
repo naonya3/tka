@@ -115,7 +115,7 @@ class _ProjectTemplatesCommand extends Command {
   @override
   final String name = 'templates';
   @override
-  final String description = 'List available project templates. Output: JSON array of {"name", "description"}.';
+  final String description = 'List available project templates. Output: {"note", "templates": [{"name", "description"}, ...]}.';
 
   final void Function(String) _printer;
 
@@ -123,10 +123,14 @@ class _ProjectTemplatesCommand extends Command {
 
   @override
   void run() {
-    final list = templateDescriptions.entries
+    final templates = templateDescriptions.entries
         .map((e) => {'name': e.key, 'description': e.value})
         .toList();
-    _printer(jsonEncode(list));
+    _printer(jsonEncode({
+      'note':
+          'If none of these workflows match the user\'s needs, design a custom schema with "tka project add --schema" instead of force-fitting a template.',
+      'templates': templates,
+    }));
   }
 }
 
@@ -310,6 +314,9 @@ To edit an existing project, modify the YAML file at: \$(tka root)/projects/<nam
   void run() {
     final schema = {
       'description': 'Project definition schema for tka project add --schema',
+      'design_for_user_note':
+          'When the user describes a workflow not matched by built-in templates, prefer designing a custom schema for them over picking the closest template. '
+          'Run "tka project templates" to see what is built in; if nothing fits, design with this spec.',
       'reserved_fields_note':
           '"title" is a reserved top-level ticket property and must not be defined in fields. '
           'Every ticket has a built-in required title set via "tka create --set title=...".',

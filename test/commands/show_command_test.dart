@@ -227,6 +227,7 @@ states:
     test('outputs empty string for null field', () async {
       ticketStore.save(_makeTicket('proj', 1, 'todo', fields: {
         'title': 'Task',
+        'detail': null,
       }));
 
       await makeRunner().run(['show', 'proj-001', '--field', 'detail']);
@@ -236,11 +237,50 @@ states:
     test('outputs empty list as JSON for missing list-like field', () async {
       ticketStore.save(_makeTicket('proj', 1, 'todo', fields: {
         'title': 'Task',
+        'history': null,
       }));
 
       await makeRunner().run(['show', 'proj-001', '--field', 'history']);
       // null field outputs empty string
       expect(out.lines.join(''), equals(''));
+    });
+
+    test('--field on unknown field errors with available list', () async {
+      ticketStore.save(_makeTicket('proj', 1, 'todo', fields: {
+        'title': 'Task',
+        'detail': 'something',
+      }));
+
+      expect(
+        () => makeRunner().run(['show', 'proj-001', '--field', 'nonexistent']),
+        throwsA(isA<Exception>().having(
+            (e) => e.toString(), 'message',
+            allOf(contains('Unknown field: nonexistent'),
+                contains('title'), contains('status')))),
+      );
+    });
+
+    test('--field reads top-level status', () async {
+      ticketStore.save(_makeTicket('proj', 1, 'in_progress', fields: {
+        'title': 'Task',
+      }));
+
+      await makeRunner().run(['show', 'proj-001', '--field', 'status']);
+      expect(out.lines.join('').trim(), equals('in_progress'));
+    });
+
+    test('--field reads top-level id', () async {
+      ticketStore.save(_makeTicket('proj', 7, 'todo'));
+
+      await makeRunner().run(['show', 'proj-007', '--field', 'id']);
+      expect(out.lines.join('').trim(), equals('proj-007'));
+    });
+
+    test('--field reads top-level created_at', () async {
+      ticketStore.save(_makeTicket('proj', 1, 'todo'));
+
+      await makeRunner().run(['show', 'proj-001', '--field', 'created_at']);
+      expect(out.lines.join('').trim(), equals('2026-04-01T10:00:00+09:00'));
     });
 
     test('outputs multiline string preserving newlines', () async {

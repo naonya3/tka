@@ -15,7 +15,8 @@ Usage: tka show <id>  (e.g. tka show shopping-001)
        tka show <id> --field <name>  (raw field value, not JSON)
 Output: compact JSON (one line). Includes available_transitions for current status.
 Use --pretty for indented output.
-Use --field to get a single field value as raw text (lists output as JSON array).''';
+Use --field to get a single field value as raw text (lists output as JSON array).
+--field accepts any built-in (id, project, seq, title, status, created_at, updated_at) or custom field. Unknown names error with the available list.''';
 
   final ProjectStore? projectStore;
   final TicketStore ticketStore;
@@ -48,7 +49,33 @@ Use --field to get a single field value as raw text (lists output as JSON array)
     // --field mode: output raw field value
     final fieldName = argResults!['field'] as String?;
     if (fieldName != null) {
-      final value = fieldName == 'title' ? ticket.title : ticket.fields[fieldName];
+      const builtIns = {
+        'id', 'project', 'seq', 'title', 'status', 'created_at', 'updated_at',
+      };
+      Set<String>? schemaFields;
+      if (projectStore != null) {
+        try {
+          schemaFields = projectStore!.load(ticket.project).fields.keys.toSet();
+        } catch (_) {
+          schemaFields = null;
+        }
+      }
+      final isKnown = builtIns.contains(fieldName) ||
+          (schemaFields != null
+              ? schemaFields.contains(fieldName)
+              : ticket.fields.containsKey(fieldName));
+      if (!isKnown) {
+        final available = [
+          ...builtIns,
+          ...?schemaFields,
+          if (schemaFields == null) ...ticket.fields.keys,
+        ]..sort();
+        throw Exception(
+            'Unknown field: $fieldName. Available: ${available.join(', ')}');
+      }
+      final dynamic value = builtIns.contains(fieldName)
+          ? ticket.toJson()[fieldName]
+          : ticket.fields[fieldName];
       if (value == null) {
         _out.writeln('');
       } else if (value is List) {

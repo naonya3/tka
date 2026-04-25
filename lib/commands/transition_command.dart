@@ -80,13 +80,27 @@ Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
       }
     }
 
+    const reservedTopLevel = {
+      'id', 'project', 'seq', 'title', 'status', 'created_at', 'updated_at',
+    };
     final appendEntries = <String, String>{};
     for (final opt in appendOptions) {
       final (name, rawValue) = parseSetOption(opt);
+      if (reservedTopLevel.contains(name)) {
+        throw Exception(
+            '"$name" is a top-level property, not a list field. '
+            'Use --set or "tka transition" instead of --append.');
+      }
       final fieldDef = projectDef.fields[name];
       if (fieldDef == null) {
+        final listFields = projectDef.fields.entries
+            .where((e) => e.value.type == FieldType.list)
+            .map((e) => e.key)
+            .toList()
+          ..sort();
         throw Exception(
-            'Field "$name" is not defined in project ${ticket.project}');
+            'Field "$name" is not defined in project ${ticket.project}. '
+            'Available list fields: ${listFields.isEmpty ? '(none)' : listFields.join(', ')}');
       }
       if (fieldDef.type != FieldType.list) {
         throw Exception(

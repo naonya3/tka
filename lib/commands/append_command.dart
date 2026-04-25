@@ -51,9 +51,24 @@ For long or multiline text, use pipe or file instead of inline value:
       throw UsageException('Value cannot be empty.', usage);
     }
 
+    const reservedTopLevel = {
+      'id', 'project', 'seq', 'title', 'status', 'created_at', 'updated_at',
+    };
+    if (reservedTopLevel.contains(fieldName)) {
+      throw Exception(
+          '"$fieldName" is a top-level property, not a list field. '
+          'Use --set or "tka transition" instead of "tka append".');
+    }
     final fieldDef = projectDef.fields[fieldName];
     if (fieldDef == null) {
-      throw Exception('Field "$fieldName" is not defined in project $project');
+      final listFields = projectDef.fields.entries
+          .where((e) => e.value.type == FieldType.list)
+          .map((e) => e.key)
+          .toList()
+        ..sort();
+      throw Exception(
+          'Field "$fieldName" is not defined in project $project. '
+          'Available list fields: ${listFields.isEmpty ? '(none)' : listFields.join(', ')}');
     }
     if (fieldDef.type != FieldType.list) {
       throw Exception(

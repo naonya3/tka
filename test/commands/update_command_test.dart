@@ -131,4 +131,42 @@ states:
     final json = loaded.toJson();
     expect(json['created_at'], equals('2026-04-01T10:00:00+09:00'));
   });
+
+  test('--set status= redirects to tka transition', () async {
+    expect(
+      () => runner.run(['update', 'test-project-001', '--set', 'status=done']),
+      throwsA(isA<ArgumentError>().having(
+          (e) => e.message, 'message',
+          allOf(contains('status'), contains('tka transition')))),
+    );
+  });
+
+  test('--set id= rejects auto-managed property', () async {
+    expect(
+      () => runner.run(['update', 'test-project-001', '--set', 'id=foo']),
+      throwsA(isA<ArgumentError>().having(
+          (e) => e.message, 'message',
+          allOf(contains('id'), contains('auto-managed')))),
+    );
+  });
+
+  test('--set seq= rejects auto-managed property', () async {
+    expect(
+      () => runner.run(['update', 'test-project-001', '--set', 'seq=99']),
+      throwsA(isA<ArgumentError>().having(
+          (e) => e.message, 'message',
+          allOf(contains('seq'), contains('auto-managed')))),
+    );
+  });
+
+  test('--set unknown= reports available fields', () async {
+    expect(
+      () => runner
+          .run(['update', 'test-project-001', '--set', 'nonexistent=foo']),
+      throwsA(isA<ArgumentError>().having(
+          (e) => e.message, 'message',
+          allOf(contains('Unknown field: nonexistent'),
+              contains('Available'), contains('title')))),
+    );
+  });
 }

@@ -29,6 +29,12 @@ dynamic coerceValue(String raw, FieldDefinition def) {
   }
 }
 
+/// Top-level ticket properties that are auto-managed and cannot be set
+/// via --set. status is excluded — it has its own redirect message.
+const _autoManagedTopLevel = {
+  'id', 'project', 'seq', 'created_at', 'updated_at',
+};
+
 Map<String, dynamic> buildFieldsFromSetOptions(
   List<String> setOptions,
   Map<String, FieldDefinition> fieldDefs,
@@ -36,8 +42,17 @@ Map<String, dynamic> buildFieldsFromSetOptions(
   final fields = <String, dynamic>{};
   for (final opt in setOptions) {
     final (name, rawValue) = parseSetOption(opt);
+    if (name == 'status') {
+      throw ArgumentError(
+          '"status" is changed via "tka transition", not --set.');
+    }
+    if (_autoManagedTopLevel.contains(name)) {
+      throw ArgumentError('"$name" is auto-managed and read-only.');
+    }
     if (!fieldDefs.containsKey(name)) {
-      throw ArgumentError('Unknown field: $name');
+      final available = ['title', ...fieldDefs.keys]..sort();
+      throw ArgumentError(
+          'Unknown field: $name. Available: ${available.join(', ')}');
     }
     final def = fieldDefs[name]!;
     if (def.type == FieldType.list) {

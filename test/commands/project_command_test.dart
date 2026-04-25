@@ -406,6 +406,77 @@ states:
       expect(def.stateMachine.getAvailableTransitions('doing'), ['done']);
     });
 
+    test('verify command "false" round-trips as string, not bool (Norway problem)', () async {
+      final output = <String>[];
+      final schema = jsonEncode({
+        'fields': {
+          'detail': {'type': 'string'},
+        },
+        'states': {
+          'initial': 'open',
+          'transitions': {
+            'open': {
+              'targets': ['closed'],
+              'verify': {'closed': 'false'},
+            },
+          },
+        },
+      });
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'add', 'norway-verify', '--schema', schema]);
+
+      final store = ProjectStore('$basePath/projects');
+      final def = store.load('norway-verify');
+      expect(def.stateMachine.getVerify('open', 'closed'), equals('false'));
+    });
+
+    test('field description "yes" round-trips as string (Norway problem)', () async {
+      final output = <String>[];
+      final schema = jsonEncode({
+        'fields': {
+          'flag': {
+            'type': 'string',
+            'description': 'yes',
+          },
+        },
+        'states': {
+          'initial': 'open',
+          'transitions': {'open': ['done']},
+        },
+      });
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'add', 'norway-desc', '--schema', schema]);
+
+      final store = ProjectStore('$basePath/projects');
+      final def = store.load('norway-desc');
+      expect(def.fields['flag']!.description, equals('yes'));
+    });
+
+    test('numeric-string description "12" round-trips as string', () async {
+      final output = <String>[];
+      final schema = jsonEncode({
+        'fields': {
+          'meta': {
+            'type': 'string',
+            'description': '12',
+          },
+        },
+        'states': {
+          'initial': 'open',
+          'transitions': {'open': ['done']},
+        },
+      });
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: output.add));
+      await runner.run(['project', 'add', 'numeric-desc', '--schema', schema]);
+
+      final store = ProjectStore('$basePath/projects');
+      final def = store.load('numeric-desc');
+      expect(def.fields['meta']!.description, equals('12'));
+    });
+
     test('creates project with guide section from JSON schema', () async {
       final output = <String>[];
       final schema = jsonEncode({

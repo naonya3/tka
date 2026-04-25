@@ -288,10 +288,11 @@ Use "tka project schema" to see the full specification.''';
   }
 
   static String _yamlStr(String s) {
-    if (s.contains(':') || s.contains('#') || s.contains('"') || s.contains("'") || s.contains('\n')) {
-      return '"${s.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n')}"';
-    }
-    return s;
+    // Always quote string scalars when emitted to YAML. Bare scalars like
+    // "false", "no", "yes", "off", "null", or "12" get reinterpreted as
+    // bool/null/int by the YAML parser on read (Norway problem). The
+    // round-trip type cast then fails because the schema expects String.
+    return '"${s.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n')}"';
   }
 }
 

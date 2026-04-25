@@ -106,8 +106,25 @@ class TicketStore {
     final fileName = '${seq.toString().padLeft(3, '0')}.json';
     final file = File(p.join(_projectDir(project), fileName));
     if (!file.existsSync()) {
+      final id = '$project-${seq.toString().padLeft(3, '0')}';
+      final archivedFile =
+          File(p.join(_projectDir(project), 'archived', fileName));
+      if (archivedFile.existsSync()) {
+        throw Exception(
+            'Ticket not found in active: $id. Use --archived to inspect archived tickets.');
+      }
+      throw Exception('Ticket not found: $id');
+    }
+    return Ticket.fromJson(
+        jsonDecode(file.readAsStringSync()) as Map<String, dynamic>);
+  }
+
+  Ticket loadArchived(String project, int seq) {
+    final fileName = '${seq.toString().padLeft(3, '0')}.json';
+    final file = File(p.join(_projectDir(project), 'archived', fileName));
+    if (!file.existsSync()) {
       throw Exception(
-          'Ticket not found: $project-${seq.toString().padLeft(3, '0')}');
+          'Archived ticket not found: $project-${seq.toString().padLeft(3, '0')}');
     }
     return Ticket.fromJson(
         jsonDecode(file.readAsStringSync()) as Map<String, dynamic>);

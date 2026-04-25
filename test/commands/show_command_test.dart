@@ -108,6 +108,40 @@ void main() {
         throwsException,
       );
     });
+
+    test('--archived loads an archived ticket by id', () async {
+      ticketStore.save(_makeTicket('proj', 1, 'done',
+          fields: {'title': 'Old work'}));
+      ticketStore.archive('proj', 1);
+
+      await makeRunner().run(['show', 'proj-001', '--archived']);
+      final result = parseOutput();
+      expect(result['id'], equals('proj-001'));
+      expect(result['title'], equals('Old work'));
+      expect(result['status'], equals('done'));
+    });
+
+    test('show without --archived on an archived ticket hints --archived', () async {
+      ticketStore.save(_makeTicket('proj', 1, 'done'));
+      ticketStore.archive('proj', 1);
+
+      expect(
+        () => makeRunner().run(['show', 'proj-001']),
+        throwsA(isA<Exception>().having(
+            (e) => e.toString(), 'message',
+            allOf(contains('not found in active'),
+                contains('--archived')))),
+      );
+    });
+
+    test('--archived on non-existent archived ticket errors clearly', () async {
+      expect(
+        () => makeRunner().run(['show', 'proj-999', '--archived']),
+        throwsA(isA<Exception>().having(
+            (e) => e.toString(), 'message',
+            contains('Archived ticket not found'))),
+      );
+    });
   });
 
   group('show command with project store', () {

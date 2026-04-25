@@ -13,10 +13,12 @@ class ShowCommand extends Command<void> {
 
 Usage: tka show <id>  (e.g. tka show shopping-001)
        tka show <id> --field <name>  (raw field value, not JSON)
+       tka show <id> --archived      (look up an archived ticket)
 Output: compact JSON (one line). Includes available_transitions for current status.
 Use --pretty for indented output.
 Use --field to get a single field value as raw text (lists output as JSON array).
---field accepts any built-in (id, project, seq, title, status, created_at, updated_at) or custom field. Unknown names error with the available list.''';
+--field accepts any built-in (id, project, seq, title, status, created_at, updated_at) or custom field. Unknown names error with the available list.
+Use --archived to inspect a ticket that was archived. Archived tickets are read-only.''';
 
   final ProjectStore? projectStore;
   final TicketStore ticketStore;
@@ -31,7 +33,10 @@ Use --field to get a single field value as raw text (lists output as JSON array)
       ..addFlag('pretty',
           help: 'Pretty-print JSON output', defaultsTo: false)
       ..addOption('field',
-          abbr: 'f', help: 'Output a single field value as raw text');
+          abbr: 'f', help: 'Output a single field value as raw text')
+      ..addFlag('archived',
+          help: 'Inspect an archived ticket (read-only)',
+          defaultsTo: false);
   }
 
   @override
@@ -44,7 +49,10 @@ Use --field to get a single field value as raw text (lists output as JSON array)
     final rawId = args.first;
     final (project, seq) = _parseIdOrUsageError(rawId);
 
-    final ticket = ticketStore.load(project, seq);
+    final archived = argResults!['archived'] as bool;
+    final ticket = archived
+        ? ticketStore.loadArchived(project, seq)
+        : ticketStore.load(project, seq);
 
     // --field mode: output raw field value
     final fieldName = argResults!['field'] as String?;

@@ -1,14 +1,16 @@
 import 'dart:io';
 import '../models/field_definition.dart';
 
-(String, String) parseSetOption(String input) {
+(String, String) parseSetOption(String input, {String optionName = '--set'}) {
   final idx = input.indexOf('=');
   if (idx < 0) {
-    throw FormatException('Invalid --set format: $input (expected field=value)');
+    throw FormatException(
+        'Invalid $optionName format: $input (expected field=value)');
   }
   final key = input.substring(0, idx);
   if (key.isEmpty) {
-    throw FormatException('Invalid --set format: field name cannot be empty');
+    throw FormatException(
+        'Invalid $optionName format: field name cannot be empty');
   }
   return (key, input.substring(idx + 1));
 }

@@ -112,7 +112,8 @@ Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
     };
     final appendEntries = <String, String>{};
     for (final opt in appendOptions) {
-      final (name, rawValue) = parseSetOption(opt);
+      final (name, rawValue) =
+          parseSetOption(opt, optionName: '--append');
       if (reservedTopLevel.contains(name)) {
         throw Exception(
             '"$name" is a top-level property, not a list field. '

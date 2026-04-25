@@ -846,6 +846,25 @@ states:
         throwsException,
       );
     });
+
+    test('--append without "=" reports the --append option, not --set', () async {
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: appendProjectStore,
+          ticketStore: appendTicketStore,
+          out: out,
+        ));
+      expect(
+        () => r.run([
+          'transition', 'appproj-001', '--to', 'doing',
+          '--append', 'noequal',
+        ]),
+        throwsA(isA<FormatException>().having(
+            (e) => e.toString(), 'message',
+            allOf(contains('--append'), isNot(contains('--set'))))),
+      );
+    });
   });
 
   group('--set and --append combined', () {

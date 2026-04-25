@@ -50,7 +50,9 @@ Examples:
     final projectName = argResults!['project'] as String;
     final statusFilter = argResults!['status'] as String?;
     final whereFilters = argResults!['where'] as List<String>;
-    final wherePairs = whereFilters.map((w) => parseSetOption(w)).toList();
+    final wherePairs = whereFilters
+        .map((w) => parseSetOption(w, optionName: '--where'))
+        .toList();
 
     const metaHints = {
       'status': 'Use --status <value> to filter by status.',

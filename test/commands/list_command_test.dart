@@ -333,6 +333,18 @@ void main() {
       );
     });
 
+    test('--where without "=" reports the --where option, not --set', () async {
+      _writeProjectYaml('${tmpDir.path}/projects', 'proj');
+      ticketStore.save(_makeTicket('proj', 1, 'todo'));
+
+      expect(
+        () => makeRunner().run(['list', '-p', 'proj', '--where', 'noequal']),
+        throwsA(isA<FormatException>().having(
+            (e) => e.toString(), 'message',
+            allOf(contains('--where'), isNot(contains('--set'))))),
+      );
+    });
+
     test('--sort rejects unknown field', () async {
       _writeProjectYaml('${tmpDir.path}/projects', 'proj');
       ticketStore.save(_makeTicket('proj', 1, 'todo'));

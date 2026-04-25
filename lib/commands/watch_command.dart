@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:args/command_runner.dart';
 import '../store/project_store.dart';
@@ -30,6 +31,14 @@ TAB: switch project  1-9: toggle status filter  0: reset filters  q: quit''';
 
   @override
   Future<void> run() async {
+    if (!stdin.hasTerminal) {
+      stderr.writeln(jsonEncode({
+        'error':
+            'tka watch requires an interactive terminal (stdin must be a TTY).',
+      }));
+      exitCode = 1;
+      return;
+    }
     final projectNames = projectStore.list()..sort(); // Fix #2: sorted
     if (projectNames.isEmpty) {
       stderr.writeln('No projects found.');

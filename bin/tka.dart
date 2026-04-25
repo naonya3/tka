@@ -44,7 +44,7 @@ Future<void> main(List<String> args) async {
     try {
       InitCommand().run();
     } on InitException catch (e) {
-      stderr.writeln(e);
+      stderr.writeln(jsonEncode({'error': e.message}));
       exit(1);
     }
     return;

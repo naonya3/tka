@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:test/test.dart';
 import 'package:tka/commands/init_command.dart';
@@ -40,6 +41,21 @@ void main() {
       final out = TestSink();
       final cmd = InitCommand(cwd: tmpDir.path, out: out);
       expect(() => cmd.run(), throwsA(isA<InitException>()));
+    });
+
+    test('CLI emits JSON error on second init', () {
+      Directory('${tmpDir.path}/.tka').createSync();
+      final repoRoot = Directory.current.path;
+      final result = Process.runSync(
+        'dart',
+        ['run', '$repoRoot/bin/tka.dart', 'init'],
+        workingDirectory: tmpDir.path,
+      );
+      expect(result.exitCode, 1);
+      // stderr should be valid JSON with an "error" key, not plaintext.
+      final firstLine = (result.stderr as String).trim().split('\n').last;
+      final parsed = jsonDecode(firstLine) as Map<String, dynamic>;
+      expect(parsed['error'], contains('.tka already exists'));
     });
   });
 }

@@ -52,6 +52,7 @@ tka list -p <project> --sort -created_at --limit 5
 tka list -p <project> --archived          # List archived tickets
 tka show <id>                             # Full ticket JSON + guide? + available_transitions
 tka show <id> --field <name>              # Raw field value (any built-in or custom field; errors on unknown)
+tka show <id> --archived                  # Inspect an archived ticket (read-only)
 tka update <id> --set field=value
 tka transition <id> --to <status>         # Result JSON includes guide? for target state
 tka transition <id> --to <status> --set field=value --append list_field=value

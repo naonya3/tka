@@ -325,6 +325,9 @@ To edit an existing project, modify the YAML file at: \$(tka root)/projects/<nam
         },
         'states': {
           'initial': '<initial_status>',
+          'guide': {
+            '<status>': 'string (optional) — instruction for the agent in this state',
+          },
           'transitions': {
             '<status>': ['<target_status>', '...'],
             '<status_with_verify>': {
@@ -349,6 +352,15 @@ To edit an existing project, modify the YAML file at: \$(tka root)/projects/<nam
       },
       'states_note':
           'States that appear only as transition targets (not as keys) are terminal states.',
+      'why_field_description_matters':
+          'Field "description" is the agent\'s only hint about what value belongs in a field. '
+          'Without it, the agent guesses from the field name. '
+          'Templates that omit descriptions become bad role models for AI-generated schemas.',
+      'why_state_guide_matters':
+          'The "guide" string for a state is embedded in the JSON returned by "tka transition" and "tka show", '
+          'giving the agent inline instructions for what to do in that state without re-reading the YAML. '
+          'Each guide should answer: what to do here, and how to decide which transition to take next. '
+          'A workflow without guides forces the agent to infer behavior from state names alone.',
       'verify_note':
           'Transitions with "verify" run the command before transitioning. '
           'If the command exits non-zero, the transition is blocked. '

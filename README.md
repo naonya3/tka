@@ -255,16 +255,34 @@ Projects are defined by fields and a state machine. Use `tka project schema` to 
 # Get the spec
 tka project schema
 
-# Create a project
+# Create a project — note the state guides and field descriptions
 tka project add bugs --schema '{
   "description": "Bug tracker",
   "fields": {
-    "severity": {"type": "enum", "values": ["critical", "major", "minor"]},
-    "detail":   {"type": "string"},
-    "history":  {"type": "list"}
+    "severity": {
+      "type": "enum",
+      "values": ["critical", "major", "minor"],
+      "description": "User impact: critical = blocks core flow, major = blocks a feature, minor = cosmetic."
+    },
+    "reproduce": {
+      "type": "string",
+      "description": "Step-by-step instructions an agent can follow to trigger the bug locally."
+    },
+    "history": {
+      "type": "list",
+      "description": "Append-only investigation log: hypotheses, findings, attempted fixes."
+    }
   },
   "states": {
     "initial": "open",
+    "guide": {
+      "open": "Read severity and reproduce. Confirm the bug locally, then transition to investigating.",
+      "investigating": "Identify the root cause. Append findings to history. Transition to fixing or wontfix.",
+      "fixing": "Implement the fix. Add a regression test. Transition to verifying.",
+      "verifying": "Run the regression test. Transition to done if green, back to fixing if not.",
+      "done": "Bug resolved.",
+      "wontfix": "Closed as intentional or out of scope."
+    },
     "transitions": {
       "open": ["investigating"],
       "investigating": ["fixing", "wontfix"],
@@ -274,6 +292,15 @@ tka project add bugs --schema '{
   }
 }'
 ```
+
+### Why state guides and field descriptions matter
+
+These are tka's quiet superpower for AI-driven workflows:
+
+- **State `guide`** is embedded in every `tka transition` and `tka show` response. The agent reads the guide for its current state and knows exactly what to do next, without re-loading the schema. Skipping guides forces the agent to infer behavior from state names alone.
+- **Field `description`** tells the agent what value belongs in each field at ticket creation time. Without it, the agent guesses from the field name and gets it wrong in subtle ways.
+
+Built-in templates (`tka project templates`) include both — copy from them when designing your own schemas.
 
 **Reserved top-level**: every ticket has a built-in required `title` (set via `tka create --set title=...`). It is not declared in `fields`.
 

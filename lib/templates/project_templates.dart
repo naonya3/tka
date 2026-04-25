@@ -4,7 +4,9 @@ version: 2
 name: sample
 description: General-purpose task tracker. A minimal starting point for any workflow.
 fields:
-  detail: { type: string }
+  detail:
+    type: string
+    description: What needs to be done. The agent reads this on the todo→in_progress transition.
 states:
   initial: todo
   guide:
@@ -20,9 +22,15 @@ version: 2
 name: tdd
 description: Test-driven development cycle. Enforces the Red-Green-Refactor discipline.
 fields:
-  detail:   { type: string }
-  test_cmd: { type: string }
-  history:  { type: list }
+  detail:
+    type: string
+    description: What feature or behavior to implement. The agent reads this on todo→red to decide what test to write.
+  test_cmd:
+    type: string
+    description: Shell command that runs the test for this ticket (e.g. "dart test test/foo_test.dart"). Used during red/green to confirm fail/pass state.
+  history:
+    type: list
+    description: Append-only progress notes (e.g. "Wrote failing test", "Implementation passes locally").
 states:
   initial: todo
   guide:
@@ -42,9 +50,15 @@ version: 2
 name: review-loop
 description: Iterative review and revision cycle. Useful for writing, documentation, or code review.
 fields:
-  detail:  { type: string }
-  target:  { type: string }
-  history: { type: list }
+  detail:
+    type: string
+    description: What is being drafted/written. Read on the draft state.
+  target:
+    type: string
+    description: Success criteria — audience, format, and quality bar the draft must meet to be approved.
+  history:
+    type: list
+    description: Append-only log of review findings, fixes applied, and revision decisions.
 states:
   initial: draft
   guide:
@@ -64,10 +78,18 @@ version: 2
 name: bug-hunt
 description: Bug lifecycle from report to verified fix. Tracks reproduction steps and expected vs actual behavior.
 fields:
-  reproduce: { type: string }
-  expected:  { type: string }
-  actual:    { type: string }
-  history:   { type: list }
+  reproduce:
+    type: string
+    description: Step-by-step instructions an agent can follow to trigger the bug locally.
+  expected:
+    type: string
+    description: What should happen at the end of the reproduce steps.
+  actual:
+    type: string
+    description: What actually happens — the broken behavior — observed when following the reproduce steps.
+  history:
+    type: list
+    description: Append-only investigation log — hypotheses, findings, attempted fixes.
 states:
   initial: reported
   guide:
@@ -88,14 +110,22 @@ version: 2
 name: agent-harness
 description: Multi-agent task orchestration. Tracks assignment, execution, and results across agents.
 fields:
-  detail:  { type: string }
-  agent:   { type: string }
+  detail:
+    type: string
+    description: The handoff brief — what the assigned agent should accomplish, with enough context to act without asking back.
+  agent:
+    type: string
+    description: Identifier of the agent assigned to execute this task (e.g. "claude-sonnet-4-6", "gpt-5", "internal-pipeline").
   priority:
     type: enum
     values: [p0, p1, p2, p3]
     description: "p0=critical, p1=high, p2=medium, p3=low"
-  result:  { type: string }
-  history: { type: list }
+  result:
+    type: string
+    description: Final output or error message produced by the executing agent on completion or failure.
+  history:
+    type: list
+    description: Append-only progress log written by the executing agent — useful for retries and debugging.
 states:
   initial: queued
   guide:
@@ -117,11 +147,21 @@ version: 2
 name: evolve
 description: Hypothesis-driven improvement loop. Test ideas with measurable outcomes.
 fields:
-  hypothesis: { type: string }
-  metric:     { type: string }
-  baseline:   { type: number }
-  result:     { type: number }
-  history:    { type: list }
+  hypothesis:
+    type: string
+    description: A specific, falsifiable claim — "if we change X, then Y will improve". The whole experiment hinges on this.
+  metric:
+    type: string
+    description: What to measure (e.g. "p95 response time", "conversion rate"). Must be the same units as baseline and result.
+  baseline:
+    type: number
+    description: Current value of the metric before the experiment. Set during the idea state.
+  result:
+    type: number
+    description: Measured value of the metric after the experiment. Compared against baseline to accept or reject the hypothesis.
+  history:
+    type: list
+    description: Append-only log of experiment design choices, intermediate observations, and decision rationale.
 states:
   initial: idea
   guide:

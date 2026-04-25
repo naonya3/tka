@@ -10,6 +10,23 @@ Every output is machine-readable JSON on stdout. Errors go to stderr as JSON. No
 
 There's one exception: `tka watch` gives you a real-time terminal dashboard to see what your agents are up to. It's surprisingly fun to watch.
 
+## When to reach for tka
+
+**Good fits**
+
+- Enforcing TDD discipline (red → green → refactor) for Claude Code, Codex, or other coding agents.
+- Long-running tasks that span many sessions, where the agent needs its state re-injected each time it resumes.
+- Release / deploy gates — `verify` makes "tests must pass before shipped" or "lint must pass before merged" structurally enforceable, not just convention.
+- Auditable agent execution logs — YAML + JSON in Git, every transition diffs cleanly, no opaque database.
+
+**Less good fits**
+
+- Solo human plain TODO management. The JSON-only output is overkill; reach for Markdown checklists, Things, or Notion.
+- Cross-team issue tracking. tka has no comments, assignees, attachments, or notifications by design — it's not a Linear / GitHub Issues replacement.
+- Schema migrations beyond the built-in `tka migrate`. If you change your custom schema, you currently hand-edit the YAML and (if needed) the ticket JSONs.
+
+In short: tka shines when the **primary user is an AI agent**. If a human is going to be the only one looking at a list, you don't need it.
+
 ## Quick Start
 
 ```bash

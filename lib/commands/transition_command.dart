@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart' as p;
 import '../helpers/field_input.dart';
+import '../helpers/guide_template.dart';
 import '../helpers/ticket_id.dart';
 import '../models/field_definition.dart';
 import '../models/ticket.dart';
@@ -238,7 +239,7 @@ Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
     }
     final guide = projectDef.stateMachine.getGuide(targetStatus);
     if (guide != null) {
-      resultJson['guide'] = guide;
+      resultJson['guide'] = expandGuide(guide, updated);
     }
     _out.writeln(jsonEncode(resultJson));
   }

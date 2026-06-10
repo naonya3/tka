@@ -204,6 +204,28 @@ states:
       expect(result['guide'], equals('未着手。implementingに遷移して開始'));
     });
 
+    test('guide placeholders are expanded against the ticket', () async {
+      File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
+version: 2
+name: myproj
+description: test project
+fields: {}
+states:
+  initial: todo
+  guide:
+    todo: "Claim with: tka transition {{id}} --to implementing"
+  transitions:
+    todo: [implementing]
+    implementing: [done]
+''');
+      ticketStore.save(_makeTicket('myproj', 1, 'todo'));
+
+      await makeRunnerWithProject().run(['show', 'myproj-001']);
+      final result = parseOutput();
+      expect(result['guide'],
+          equals('Claim with: tka transition myproj-001 --to implementing'));
+    });
+
     test('guide is omitted when not set for current status', () async {
       File('${projectDir.path}/myproj.yaml').writeAsStringSync('''
 version: 2

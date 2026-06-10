@@ -335,7 +335,7 @@ tka project add bugs --schema '{
 
 These are tka's quiet superpower for AI-driven workflows:
 
-- **State `guide`** is embedded in every `tka transition` and `tka show` response. The agent reads the guide for its current state and knows exactly what to do next, without re-loading the schema. Skipping guides forces the agent to infer behavior from state names alone.
+- **State `guide`** is embedded in every `tka transition` and `tka show` response. The agent reads the guide for its current state and knows exactly what to do next, without re-loading the schema. Skipping guides forces the agent to infer behavior from state names alone. Guides may use `{{id}}`, `{{project}}` and `{{seq}}` placeholders — expanded against the concrete ticket at read time — so a guide can say `tka transition {{id}} --to running` and be copy-paste executable.
 - **Field `description`** tells the agent what value belongs in each field at ticket creation time. Without it, the agent guesses from the field name and gets it wrong in subtle ways.
 
 Built-in templates (`tka project templates`) include both — copy from them when designing your own schemas.

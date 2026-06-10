@@ -4,6 +4,7 @@ import 'package:args/command_runner.dart';
 import '../helpers/ticket_id.dart';
 import '../store/project_store.dart';
 import '../store/ticket_store.dart';
+import '../helpers/guide_template.dart';
 
 class ShowCommand extends Command<void> {
   @override
@@ -100,7 +101,7 @@ Use --archived to inspect a ticket that was archived. Archived tickets are read-
       try {
         final def = projectStore!.load(ticket.project);
         final guide = def.stateMachine.getGuide(ticket.status);
-        if (guide != null) json['guide'] = guide;
+        if (guide != null) json['guide'] = expandGuide(guide, ticket);
         final targets = def.stateMachine.getAvailableTransitions(ticket.status);
         json['available_transitions'] = targets.map((to) => to).toList();
       } catch (_) {

@@ -377,7 +377,10 @@ To edit an existing workflow, modify the YAML file at: \$(tka root)/projects/<na
           'The "guide" string for a state is embedded in the JSON returned by "tka transition" and "tka show", '
           'giving the agent inline instructions for what to do in that state without re-reading the YAML. '
           'Each guide should answer: what to do here, and how to decide which transition to take next. '
-          'A workflow without guides forces the agent to infer behavior from state names alone.',
+          'A workflow without guides forces the agent to infer behavior from state names alone. '
+          'Guides may contain {{id}}, {{project}} and {{seq}} placeholders, expanded against '
+          'the concrete ticket at read time — write copy-pasteable commands like '
+          '"tka transition {{id}} --to running".',
       'verify_note':
           'Transitions with "verify" run the command before transitioning. '
           'If the command exits non-zero, the transition is blocked. '

@@ -69,12 +69,13 @@ Map<String, dynamic> buildFieldsFromSetOptions(
   return fields;
 }
 
-/// Extracts the reserved "title" key from --set options.
-/// Returns (resolvedTitle, remainingOptions). If title is not present,
-/// resolvedTitle is null.
 /// Hard cap for ticket titles. Long prose belongs in a string field
 /// (e.g. "detail"); an unbounded title breaks list output and the watch TUI.
 const maxTitleLength = 500;
+
+/// Extracts the reserved "title" key from --set options.
+/// Returns (resolvedTitle, remainingOptions). If title is not present,
+/// resolvedTitle is null.
 
 (String?, List<String>) extractTitleFromSetOptions(List<String> setOptions) {
   String? title;

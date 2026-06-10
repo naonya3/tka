@@ -34,7 +34,7 @@ dynamic coerceValue(String raw, FieldDefinition def) {
 /// Top-level ticket properties that are auto-managed and cannot be set
 /// via --set. status is excluded — it has its own redirect message.
 const _autoManagedTopLevel = {
-  'id', 'project', 'seq', 'created_at', 'updated_at',
+  'id', 'project', 'seq', 'created_at', 'updated_at', 'status_log',
 };
 
 Map<String, dynamic> buildFieldsFromSetOptions(

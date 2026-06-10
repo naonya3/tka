@@ -140,6 +140,42 @@ states:
     );
   });
 
+  group('status_log audit trail', () {
+    test('transition appends an auto-managed entry', () async {
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: projectStore,
+          ticketStore: ticketStore,
+          out: out,
+        ));
+      await r.run(['transition', 'game-dev-001', '--to', 'in_progress']);
+
+      final loaded = ticketStore.load('game-dev', 1);
+      expect(loaded.statusLog, hasLength(1));
+      final entry = loaded.statusLog.single;
+      expect(entry['from'], equals('backlog'));
+      expect(entry['to'], equals('in_progress'));
+      expect(entry['at'], isA<String>());
+      expect(entry.containsKey('verify_passed'), isFalse);
+    });
+
+    test('entries accumulate across transitions', () async {
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: projectStore,
+          ticketStore: ticketStore,
+          out: TestSink(),
+        ));
+      await r.run(['transition', 'game-dev-001', '--to', 'in_progress']);
+      await r.run(['transition', 'game-dev-001', '--to', 'review']);
+
+      final loaded = ticketStore.load('game-dev', 1);
+      expect(loaded.statusLog.map((e) => e['to']).toList(),
+          equals(['in_progress', 'review']));
+    });
+  });
+
   group('verify', () {
     late Directory verifyTmpDir;
     late ProjectStore verifyProjectStore;

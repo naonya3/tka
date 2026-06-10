@@ -18,7 +18,7 @@ Usage: tka show <id>  (e.g. tka show shopping-001)
 Output: compact JSON (one line). Includes available_transitions for current status.
 Use --pretty for indented output.
 Use --field to get a single field value as raw text (lists output as JSON array).
---field accepts any built-in (id, project, seq, title, status, created_at, updated_at) or custom field. Unknown names error with the available list.
+--field accepts any built-in (id, project, seq, title, status, created_at, updated_at, status_log) or custom field. Unknown names error with the available list.
 Use --archived to inspect a ticket that was archived. Archived tickets are read-only.''';
 
   final ProjectStore? projectStore;
@@ -60,6 +60,7 @@ Use --archived to inspect a ticket that was archived. Archived tickets are read-
     if (fieldName != null) {
       const builtIns = {
         'id', 'project', 'seq', 'title', 'status', 'created_at', 'updated_at',
+        'status_log',
       };
       Set<String>? schemaFields;
       if (projectStore != null) {
@@ -82,9 +83,11 @@ Use --archived to inspect a ticket that was archived. Archived tickets are read-
         throw Exception(
             'Unknown field: $fieldName. Available: ${available.join(', ')}');
       }
-      final dynamic value = builtIns.contains(fieldName)
-          ? ticket.toJson()[fieldName]
-          : ticket.fields[fieldName];
+      final dynamic value = fieldName == 'status_log'
+          ? ticket.statusLog
+          : builtIns.contains(fieldName)
+              ? ticket.toJson()[fieldName]
+              : ticket.fields[fieldName];
       if (value == null) {
         _out.writeln('');
       } else if (value is List) {

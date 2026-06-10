@@ -4,6 +4,11 @@ class Ticket {
   final String title;
   final String status;
   final Map<String, dynamic> fields;
+
+  /// Auto-managed transition audit log: one entry per transition,
+  /// e.g. {"from": "todo", "to": "red", "at": "...", "verify_passed": true}.
+  /// Written only by the transition command — the agent's reflog.
+  final List<Map<String, dynamic>> statusLog;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String _createdAtRaw;
@@ -15,11 +20,13 @@ class Ticket {
     required this.title,
     required this.status,
     required this.fields,
+    List<Map<String, dynamic>>? statusLog,
     required this.createdAt,
     required this.updatedAt,
     required String createdAtRaw,
     required String updatedAtRaw,
-  })  : _createdAtRaw = createdAtRaw,
+  })  : statusLog = statusLog ?? [],
+        _createdAtRaw = createdAtRaw,
         _updatedAtRaw = updatedAtRaw {
     if (title.trim().isEmpty) {
       throw ArgumentError('title is required and cannot be empty');
@@ -50,6 +57,9 @@ class Ticket {
       title: title,
       status: json['status'] as String,
       fields: Map<String, dynamic>.from(json['fields'] as Map),
+      statusLog: (json['status_log'] as List?)
+          ?.map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
       createdAt: DateTime.parse(createdAtStr),
       updatedAt: DateTime.parse(updatedAtStr),
       createdAtRaw: createdAtStr,
@@ -65,6 +75,7 @@ class Ticket {
       'title': title,
       'status': status,
       'fields': fields,
+      if (statusLog.isNotEmpty) 'status_log': statusLog,
       'created_at': _createdAtRaw,
       'updated_at': _updatedAtRaw,
     };

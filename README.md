@@ -342,7 +342,7 @@ These are tka's quiet superpower for AI-driven workflows:
 
 Built-in templates (`tka project templates`) include both — copy from them when designing your own schemas.
 
-**Reserved top-level**: every ticket has a built-in required `title` (set via `tka create --set title=...`). It is not declared in `fields`. Titles are capped at 500 chars — long text belongs in a string field such as `detail`.
+**Reserved top-level**: every ticket has a built-in required `title` (set via `tka create --set title=...`). It is not declared in `fields`. Titles are capped at 500 chars — long text belongs in a string field such as `detail`. `status_log` is also reserved: an auto-managed audit log where every `tka transition` appends `{"from", "to", "at", "verify_passed?", "agent?"}` (set `TKA_AGENT` to record who transitioned). It cannot be written via `--set` — it is the trail agents read to reconstruct what actually happened, e.g. after a context loss: `tka show <id> --field status_log`.
 
 **Field types**: `string`, `number`, `date` (YYYY-MM-DD), `list` (append-only), `enum` (requires `values`)
 

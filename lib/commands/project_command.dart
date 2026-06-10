@@ -326,8 +326,11 @@ To edit an existing workflow, modify the YAML file at: \$(tka root)/projects/<na
           'When the user describes a workflow not matched by built-in templates, prefer designing a custom schema for them over picking the closest template. '
           'Run "tka project templates" to see what is built in; if nothing fits, design with this spec.',
       'reserved_fields_note':
-          '"title" is a reserved top-level ticket property and must not be defined in fields. '
-          'Every ticket has a built-in required title set via "tka create --set title=...".',
+          '"title" and "status_log" are reserved top-level ticket properties and must not be '
+          'defined in fields. Every ticket has a built-in required title set via '
+          '"tka create --set title=...". "status_log" is the auto-managed transition audit '
+          'log: every "tka transition" appends {"from", "to", "at", "verify_passed?", "agent?"} '
+          '(agent from the TKA_AGENT env var). Read it via "tka show <id> --field status_log".',
       'format': {
         'description': 'string (optional)',
         'fields': {

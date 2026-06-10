@@ -46,6 +46,11 @@ class ProjectDefinition {
           'Every ticket has a built-in required "title" — remove it from your schema. '
           'Run "tka migrate" to upgrade legacy projects.');
     }
+    if (fieldsRaw.containsKey('status_log')) {
+      throw ArgumentError(
+          'Schema error: "status_log" is a reserved top-level property and cannot be defined in fields. '
+          'It is the auto-managed transition audit log — remove it from your schema.');
+    }
     final fields = <String, FieldDefinition>{};
     for (final entry in fieldsRaw.entries) {
       final name = entry.key as String;

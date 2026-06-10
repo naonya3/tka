@@ -215,12 +215,21 @@ Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
     final now = DateTime.now();
     final nowStr = now.toIso8601String();
     final currentJson = current.toJson();
+    final agent = Platform.environment['TKA_AGENT'];
+    final logEntry = <String, dynamic>{
+      'from': ticket.status,
+      'to': targetStatus,
+      'at': nowStr,
+      if (verifyCmd != null) 'verify_passed': true,
+      if (agent != null && agent.isNotEmpty) 'agent': agent,
+    };
     final updated = Ticket(
       project: current.project,
       seq: current.seq,
       title: newTitle ?? current.title,
       status: targetStatus,
       fields: newFields,
+      statusLog: [...current.statusLog, logEntry],
       createdAt: current.createdAt,
       updatedAt: now,
       createdAtRaw: currentJson['created_at'] as String,

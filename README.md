@@ -325,7 +325,7 @@ These are tka's quiet superpower for AI-driven workflows:
 
 Built-in templates (`tka project templates`) include both — copy from them when designing your own schemas.
 
-**Reserved top-level**: every ticket has a built-in required `title` (set via `tka create --set title=...`). It is not declared in `fields`.
+**Reserved top-level**: every ticket has a built-in required `title` (set via `tka create --set title=...`). It is not declared in `fields`. Titles are capped at 500 chars — long text belongs in a string field such as `detail`.
 
 **Field types**: `string`, `number`, `date` (YYYY-MM-DD), `list` (append-only), `enum` (requires `values`)
 

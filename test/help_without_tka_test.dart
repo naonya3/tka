@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:test/test.dart';
 
@@ -37,6 +38,17 @@ void main() {
       final result = runTka(['-h']);
       expect(result.exitCode, 0);
       expect(result.stderr, contains('Ticket for Agents'));
+    });
+  });
+
+  group('errors without .tka are JSON', () {
+    test('list with missing TKA_BASE_PATH errors as JSON', () {
+      final result = runTka(['list', '-p', 'anything']);
+      expect(result.exitCode, 1);
+      final err = jsonDecode((result.stderr as String).trim())
+          as Map<String, dynamic>;
+      expect(err['error'], contains('.tka directory not found'));
+      expect(err['error'], contains('tka init'));
     });
   });
 }

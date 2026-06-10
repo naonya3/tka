@@ -59,7 +59,10 @@ Future<void> main(List<String> args) async {
       return;
     }
     if (baseOption == null) {
-      stderr.writeln('.tka directory not found.');
+      stderr.writeln(jsonEncode({
+        'error': '.tka directory not found. Run "tka init" first, '
+            'or point at one with --base or TKA_BASE_PATH.'
+      }));
       exit(1);
     }
     stderr.write(
@@ -74,7 +77,7 @@ Future<void> main(List<String> args) async {
     stderr.writeln('Initialized $baseOption');
     basePath = baseOption;
   } on ResolveException catch (e) {
-    stderr.writeln(e);
+    stderr.writeln(jsonEncode({'error': e.toString()}));
     exit(1);
   }
 

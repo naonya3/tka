@@ -207,4 +207,48 @@ void main() {
       expect(archived['status'], equals('done'));
     });
   });
+
+  group('corrupt ticket files', () {
+    test('load error includes the file path', () {
+      final dir = Directory('${tmpDir.path}/proj');
+      dir.createSync(recursive: true);
+      File('${dir.path}/001.json').writeAsStringSync('{broken');
+
+      expect(
+        () => store.load('proj', 1),
+        throwsA(predicate((e) =>
+            e is CorruptTicketFileException &&
+            e.toString().contains('001.json'))),
+      );
+    });
+
+    test('listAll skips corrupt files and collects their paths', () {
+      final dir = Directory('${tmpDir.path}/proj');
+      dir.createSync(recursive: true);
+      store.save(_makeTicket('proj', 1, 'todo'));
+      File('${dir.path}/002.json').writeAsStringSync('{broken');
+      store.save(_makeTicket('proj', 3, 'todo'));
+
+      final corrupt = <String>[];
+      final tickets = store.listAll('proj', corruptFiles: corrupt);
+
+      expect(tickets.map((t) => t.seq), equals([1, 3]));
+      expect(corrupt, hasLength(1));
+      expect(corrupt.single, contains('002.json'));
+    });
+
+    test('listArchived skips corrupt files and collects their paths', () {
+      final archivedDir = Directory('${tmpDir.path}/proj/archived');
+      archivedDir.createSync(recursive: true);
+      File('${archivedDir.path}/001.json')
+          .writeAsStringSync(jsonEncode(_makeTicket('proj', 1, 'done').toJson()));
+      File('${archivedDir.path}/002.json').writeAsStringSync('not json');
+
+      final corrupt = <String>[];
+      final tickets = store.listArchived('proj', corruptFiles: corrupt);
+
+      expect(tickets.map((t) => t.seq), equals([1]));
+      expect(corrupt.single, contains('002.json'));
+    });
+  });
 }

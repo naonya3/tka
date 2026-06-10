@@ -11,12 +11,30 @@ class SeqConflictException implements Exception {
   String toString() => 'Seq conflict: $project-${seq.toString().padLeft(3, '0')} already exists';
 }
 
+class CorruptTicketFileException implements Exception {
+  final String path;
+  final String reason;
+  CorruptTicketFileException(this.path, this.reason);
+  @override
+  String toString() => 'Corrupt ticket file: $path ($reason)';
+}
+
 class TicketStore {
   final String basePath;
 
   TicketStore(this.basePath);
 
   String _projectDir(String project) => p.join(basePath, project);
+
+  Ticket _parseTicketFile(File file) {
+    try {
+      return Ticket.fromJson(
+          jsonDecode(file.readAsStringSync()) as Map<String, dynamic>);
+    } catch (e) {
+      final reason = e is FormatException ? e.message : e.toString();
+      throw CorruptTicketFileException(file.path, reason);
+    }
+  }
 
   int nextSeq(String project) {
     // Scan archived tickets too: an archived seq must never be reissued,
@@ -120,8 +138,7 @@ class TicketStore {
       }
       throw Exception('Ticket not found: $id');
     }
-    return Ticket.fromJson(
-        jsonDecode(file.readAsStringSync()) as Map<String, dynamic>);
+    return _parseTicketFile(file);
   }
 
   Ticket loadArchived(String project, int seq) {
@@ -131,39 +148,36 @@ class TicketStore {
       throw Exception(
           'Archived ticket not found: $project-${seq.toString().padLeft(3, '0')}');
     }
-    return Ticket.fromJson(
-        jsonDecode(file.readAsStringSync()) as Map<String, dynamic>);
+    return _parseTicketFile(file);
   }
 
-  List<Ticket> listAll(String project) {
-    final dir = Directory(_projectDir(project));
+  List<Ticket> _listDir(Directory dir, List<String>? corruptFiles) {
     if (!dir.existsSync()) return [];
-    return dir
-        .listSync()
-        .whereType<File>()
-        .where(
-            (f) => f.path.endsWith('.json') && !f.path.endsWith('.tmp'))
-        .map((f) => Ticket.fromJson(
-            jsonDecode(f.readAsStringSync()) as Map<String, dynamic>))
-        .toList()
-      ..sort((a, b) => a.seq.compareTo(b.seq));
+    final tickets = <Ticket>[];
+    for (final f in dir.listSync().whereType<File>()) {
+      if (!f.path.endsWith('.json') || f.path.endsWith('.tmp')) continue;
+      try {
+        tickets.add(_parseTicketFile(f));
+      } on CorruptTicketFileException {
+        // A single corrupt file must not take down the whole listing.
+        corruptFiles?.add(f.path);
+      }
+    }
+    tickets.sort((a, b) => a.seq.compareTo(b.seq));
+    return tickets;
+  }
+
+  List<Ticket> listAll(String project, {List<String>? corruptFiles}) {
+    return _listDir(Directory(_projectDir(project)), corruptFiles);
   }
 
   List<Ticket> listByStatus(String project, String status) {
     return listAll(project).where((t) => t.status == status).toList();
   }
 
-  List<Ticket> listArchived(String project) {
-    final dir = Directory(p.join(_projectDir(project), 'archived'));
-    if (!dir.existsSync()) return [];
-    return dir
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.json') && !f.path.endsWith('.tmp'))
-        .map((f) => Ticket.fromJson(
-            jsonDecode(f.readAsStringSync()) as Map<String, dynamic>))
-        .toList()
-      ..sort((a, b) => a.seq.compareTo(b.seq));
+  List<Ticket> listArchived(String project, {List<String>? corruptFiles}) {
+    return _listDir(
+        Directory(p.join(_projectDir(project), 'archived')), corruptFiles);
   }
 
   void archive(String project, int seq) {

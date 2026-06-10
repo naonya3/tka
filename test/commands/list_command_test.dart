@@ -388,4 +388,30 @@ void main() {
       expect(result, isEmpty);
     });
   });
+
+  group('corrupt ticket files', () {
+    test('skips corrupt files, lists the rest, warns on stderr', () async {
+      _writeProjectYaml('${tmpDir.path}/projects', 'proj');
+      ticketStore.save(_makeTicket('proj', 1, 'todo'));
+      File('${tmpDir.path}/data/proj/002.json').writeAsStringSync('{broken');
+      ticketStore.save(_makeTicket('proj', 3, 'todo'));
+
+      final err = TestSink();
+      final runner = CommandRunner<void>('ticket', 'test');
+      runner.addCommand(ListCommand(
+        projectStore: projectStore,
+        ticketStore: ticketStore,
+        out: out,
+        err: err,
+      ));
+      await runner.run(['list', '-p', 'proj']);
+
+      final result = parseOutput();
+      expect(result.map((e) => e['id']), equals(['proj-001', 'proj-003']));
+      final warning =
+          jsonDecode(err.lines.join('')) as Map<String, dynamic>;
+      expect(warning['warning'], contains('corrupt'));
+      expect((warning['files'] as List).single, contains('002.json'));
+    });
+  });
 }

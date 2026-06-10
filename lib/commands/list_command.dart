@@ -16,6 +16,7 @@ Usage: tka list --project <name> [--status X] [--where field=value] [--sort key]
 Output: JSON array with selected fields (default: id, status).
 Built-in fields: id, seq, project, status, created_at, updated_at.
 Custom fields: as defined in the project YAML.
+Corrupt ticket files are skipped; a warning JSON listing their paths goes to stderr.
 
 Examples:
   tka list -p myproj
@@ -28,12 +29,15 @@ Examples:
   final ProjectStore projectStore;
   final TicketStore ticketStore;
   final IOSink _out;
+  final IOSink _err;
 
   ListCommand({
     required this.projectStore,
     required this.ticketStore,
     IOSink? out,
-  }) : _out = out ?? stdout {
+    IOSink? err,
+  })  : _out = out ?? stdout,
+        _err = err ?? stderr {
     argParser
       ..addOption('project', abbr: 'p', help: 'Project name (required)', mandatory: true)
       ..addOption('status', abbr: 's', help: 'Filter by status')
@@ -123,9 +127,16 @@ Examples:
     }
 
     final archived = argResults!['archived'] as bool;
+    final corruptFiles = <String>[];
     var allTickets = archived
-        ? ticketStore.listArchived(projectName)
-        : ticketStore.listAll(projectName);
+        ? ticketStore.listArchived(projectName, corruptFiles: corruptFiles)
+        : ticketStore.listAll(projectName, corruptFiles: corruptFiles);
+    if (corruptFiles.isNotEmpty) {
+      _err.writeln(jsonEncode({
+        'warning': 'Skipped corrupt ticket files',
+        'files': corruptFiles,
+      }));
+    }
     if (statusFilter != null) {
       allTickets = allTickets.where((t) => t.status == statusFilter).toList();
     }

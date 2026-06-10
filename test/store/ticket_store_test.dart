@@ -184,6 +184,25 @@ void main() {
           File('${tmpDir.path}/proj/archived/002.json').existsSync(), isTrue);
     });
 
+    test('distinguishes already-archived from nonexistent tickets', () {
+      final ticket = _makeTicket('proj', 2, 'done');
+      store.save(ticket);
+      store.archive('proj', 2);
+
+      expect(
+        () => store.archive('proj', 2),
+        throwsA(predicate((e) =>
+            e is Exception &&
+            e.toString().contains('not found in active') &&
+            e.toString().contains('already archived'))),
+      );
+      expect(
+        () => store.archive('proj', 99),
+        throwsA(predicate(
+            (e) => e is Exception && e.toString() == 'Exception: Ticket not found: proj-099')),
+      );
+    });
+
     test('refuses to overwrite an existing archived ticket', () {
       final dir = Directory('${tmpDir.path}/proj');
       final archivedDir = Directory('${dir.path}/archived');

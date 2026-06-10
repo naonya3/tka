@@ -182,10 +182,17 @@ class TicketStore {
 
   void archive(String project, int seq) {
     final fileName = '${seq.toString().padLeft(3, '0')}.json';
+    final id = '$project-${seq.toString().padLeft(3, '0')}';
     final src = File(p.join(_projectDir(project), fileName));
     if (!src.existsSync()) {
-      throw Exception(
-          'Ticket not found: $project-${seq.toString().padLeft(3, '0')}');
+      final archivedFile =
+          File(p.join(_projectDir(project), 'archived', fileName));
+      if (archivedFile.existsSync()) {
+        throw Exception(
+            'Ticket not found in active: $id. It is already archived; '
+            'use --archived with "tka show" to inspect it.');
+      }
+      throw Exception('Ticket not found: $id');
     }
     final archiveDir = Directory(p.join(_projectDir(project), 'archived'));
     if (!archiveDir.existsSync()) archiveDir.createSync();

@@ -329,7 +329,7 @@ Built-in templates (`tka project templates`) include both — copy from them whe
 
 **Field types**: `string`, `number`, `date` (YYYY-MM-DD), `list` (append-only), `enum` (requires `values`)
 
-**States**: Keys in `transitions` are non-terminal. States that only appear as targets (like `done` above) are terminal — no further transitions allowed.
+**States**: Keys in `transitions` are non-terminal. States that only appear as targets (like `done` above) are terminal — no further transitions allowed. `initial` must be a key in `transitions`; schemas whose initial state has no outgoing transitions are rejected.
 
 ## Directory Structure
 

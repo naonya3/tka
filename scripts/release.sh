@@ -43,7 +43,8 @@ if [ "$NEW_VERSION" = "NONE" ] || [ -z "$NEW_VERSION" ]; then
 else
   echo "Version bump: $CURRENT -> $NEW_VERSION"
   sed -i '' "s/^version: .*/version: $NEW_VERSION/" pubspec.yaml
-  git add pubspec.yaml
+  sed -i '' "s/^const tkaVersion = .*/const tkaVersion = '$NEW_VERSION';/" lib/version.dart
+  git add pubspec.yaml lib/version.dart
   git commit -m "Bump version to $NEW_VERSION for $TKA_TICKET_ID"
 fi
 

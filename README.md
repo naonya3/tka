@@ -85,6 +85,9 @@ tka archive <id>
 tka --base /path/to/.tka list -p myproj   # Use specific .tka directory
 tka --base /path/to/.tka root             # Print resolved .tka path
 
+# --- Global option: --version ---
+tka --version                             # {"version": "x.y.z"}
+
 # --- Dashboard ---
 tka watch                                 # Real-time TUI dashboard
 ```

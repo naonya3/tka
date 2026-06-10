@@ -15,6 +15,7 @@ import 'package:tka/commands/root_command.dart';
 import 'package:tka/commands/init_command.dart' show InitCommand, InitException, InitStubCommand;
 import 'package:tka/commands/migrate_command.dart';
 import 'package:tka/resolve_base_path.dart';
+import 'package:tka/version.dart';
 import 'package:tka/store/project_store.dart';
 import 'package:tka/store/ticket_store.dart';
 
@@ -35,6 +36,11 @@ Future<void> main(List<String> args) async {
   final wantsHelp = rest.isEmpty ||
       rest.contains('--help') ||
       rest.contains('-h');
+
+  if (rest.isNotEmpty && rest.first == '--version') {
+    stdout.writeln(jsonEncode({'version': tkaVersion}));
+    return;
+  }
 
   if (rest.isNotEmpty && rest.first == 'init') {
     if (rest.contains('--help') || rest.contains('-h')) {
@@ -184,8 +190,9 @@ No human-friendly formatting — designed to be consumed by AI agents directly.
 .tka resolution: --base <path> > TKA_BASE_PATH env > ./.tka > search parent directories.
 
 Global options:
-  --base    Path to .tka directory
-  -h        Print this usage information
+  --base       Path to .tka directory
+  --version    Print version JSON
+  -h           Print this usage information
 
 Commands:
   init            Initialize .tka/ in current directory

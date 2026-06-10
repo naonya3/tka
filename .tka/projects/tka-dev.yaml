@@ -1,8 +1,7 @@
-version: 1
+version: 2
 name: tka-dev
 description: tka development
 fields:
-  title: { type: string, required: true }
   detail: { type: string }
   worktree: { type: string }
   history: { type: list }

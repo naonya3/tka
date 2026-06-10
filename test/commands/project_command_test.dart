@@ -306,6 +306,22 @@ states:
       expect(def.stateMachine.initial, 'open');
     });
 
+    test('writes current schema version 2 like templates do', () async {
+      final schema = jsonEncode({
+        'fields': <String, dynamic>{},
+        'states': {
+          'initial': 'open',
+          'transitions': {'open': ['done']},
+        },
+      });
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: (_) {}));
+      await runner.run(['project', 'add', 'versioned', '--schema', schema]);
+
+      final yaml = File('$basePath/projects/versioned.yaml').readAsStringSync();
+      expect(yaml, startsWith('version: 2\n'));
+    });
+
     test('rejects schema with title in fields', () async {
       final output = <String>[];
       final schema = jsonEncode({

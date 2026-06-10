@@ -203,7 +203,7 @@ Use "tka project schema" to see the full specification.''';
     }
 
     final yamlData = <String, dynamic>{
-      'version': 1,
+      'version': 2,
       'name': projectName,
       ...schema,
     };

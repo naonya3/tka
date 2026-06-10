@@ -326,6 +326,24 @@ states:
       );
     });
 
+    test('rejects schema whose initial state has no transitions', () async {
+      final schema = jsonEncode({
+        'fields': <String, dynamic>{},
+        'states': {
+          'initial': 'ghost',
+          'transitions': {'a': ['b']},
+        },
+      });
+      final runner = CommandRunner('tka', 'test')
+        ..addCommand(ProjectCommand(basePath, printer: (_) {}));
+      expect(
+        () => runner.run(['project', 'add', 'badinit', '--schema', schema]),
+        throwsA(isA<ArgumentError>().having((e) => e.toString(), 'message',
+            allOf(contains('initial'), contains('ghost')))),
+      );
+      expect(File('$basePath/projects/badinit.yaml').existsSync(), isFalse);
+    });
+
     test('creates project from stdin with --schema -', () async {
       final output = <String>[];
       final schema = jsonEncode({

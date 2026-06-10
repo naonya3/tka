@@ -209,7 +209,14 @@ Use "tka project schema" to see the full specification.''';
     };
 
     // Validate by parsing
-    ProjectDefinition.fromYaml(yamlData);
+    final def = ProjectDefinition.fromYaml(yamlData);
+    final sm = def.stateMachine;
+    if (!sm.transitions.containsKey(sm.initial)) {
+      throw ArgumentError(
+          'Schema error: states.initial "${sm.initial}" is not a key in states.transitions, '
+          'so every new ticket would be born in a terminal state with no way out. '
+          'Add transitions for "${sm.initial}" (e.g. "${sm.initial}": ["<next_state>"]).');
+    }
 
     final yaml = _toYaml(yamlData);
     final dir = Directory(_projectsPath);

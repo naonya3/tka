@@ -152,7 +152,8 @@ void main() {
         () => store.save(updatedTicket,
             expectedUpdatedAt: '2026-04-01T00:00:00+09:00'),
         throwsA(predicate((e) =>
-            e is Exception && e.toString().contains('Optimistic lock'))),
+            e is ConcurrentWriteException &&
+            e.toString().contains('modified concurrently'))),
       );
     });
 

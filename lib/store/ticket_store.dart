@@ -11,6 +11,14 @@ class SeqConflictException implements Exception {
   String toString() => 'Seq conflict: $project-${seq.toString().padLeft(3, '0')} already exists';
 }
 
+class ConcurrentWriteException implements Exception {
+  final String id;
+  ConcurrentWriteException(this.id);
+  @override
+  String toString() =>
+      'Ticket was modified concurrently: $id. Re-read it with "tka show" and retry.';
+}
+
 class CorruptTicketFileException implements Exception {
   final String path;
   final String reason;
@@ -114,15 +122,19 @@ class TicketStore {
       final data =
           jsonDecode(existing.readAsStringSync()) as Map<String, dynamic>;
       if (data['updated_at'] != expectedUpdatedAt) {
-        throw Exception(
-            'Optimistic lock conflict: ticket was modified by another process');
+        throw ConcurrentWriteException(ticket.id);
       }
     }
 
     final tmpFile = File('$filePath.tmp');
     tmpFile.writeAsStringSync(
         const JsonEncoder.withIndent('  ').convert(ticket.toJson()));
-    tmpFile.renameSync(filePath);
+    try {
+      tmpFile.renameSync(filePath);
+    } on FileSystemException {
+      // Another process renamed our tmp file away: we lost a write race.
+      throw ConcurrentWriteException(ticket.id);
+    }
   }
 
   /// Error for a missing active ticket; tells archived apart from gone.

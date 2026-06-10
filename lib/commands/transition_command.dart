@@ -150,9 +150,18 @@ Output: {"id": "...", "from": "...", "to": "...", "guide?": "..."}''';
         'TKA_TICKET_PROJECT': ticket.project,
         'TKA_TICKET_SEQ': ticket.seq.toString(),
         'TKA_TICKET_STATUS': ticket.status,
+        'TKA_TICKET_TITLE': ticket.title,
         'TKA_TRANSITION_TO': targetStatus,
         'TKA_BASE_PATH': ?basePath,
       };
+      // Expose ticket fields so verify commands can run per-ticket checks
+      // (e.g. sh -c "$TKA_TICKET_FIELD_TEST_CMD") without re-invoking tka.
+      ticket.fields.forEach((name, value) {
+        if (value == null) return;
+        final envName =
+            'TKA_TICKET_FIELD_${name.toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '_')}';
+        env[envName] = value is List ? jsonEncode(value) : value.toString();
+      });
       final workDir = basePath != null ? p.dirname(basePath!) : null;
       final result = Platform.isWindows
           ? Process.runSync('cmd', ['/c', verifyCmd],

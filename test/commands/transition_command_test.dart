@@ -204,6 +204,52 @@ states:
       expect(loaded.status, equals('green'));
     });
 
+    test('verify command receives ticket fields as TKA_TICKET_FIELD_*',
+        () async {
+      File('${verifyTmpDir.path}/projects/fieldenv.yaml').writeAsStringSync('''
+version: 2
+name: fieldenv
+description: test
+fields:
+  test_cmd: { type: string }
+  tags: { type: list }
+states:
+  initial: todo
+  transitions:
+    todo:
+      targets: [done]
+      verify:
+        done: "test \\"\$TKA_TICKET_FIELD_TEST_CMD\\" = \\"exit 0\\" && echo \\"\$TKA_TICKET_FIELD_TAGS\\" | grep -q gate && test \\"\$TKA_TICKET_TITLE\\" = FieldEnv"
+''');
+
+      final ticket = Ticket(
+        project: 'fieldenv',
+        seq: 1,
+        status: 'todo',
+        title: 'FieldEnv',
+        fields: {
+          'test_cmd': 'exit 0',
+          'tags': ['gate', 'demo'],
+        },
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      verifyTicketStore.save(ticket);
+
+      final out = TestSink();
+      final r = CommandRunner<void>('tka', 'test')
+        ..addCommand(TransitionCommand(
+          projectStore: verifyProjectStore,
+          ticketStore: verifyTicketStore,
+          out: out,
+        ));
+      await r.run(['transition', 'fieldenv-001', '--to', 'done']);
+      final json = jsonDecode(out.lines.join('')) as Map<String, dynamic>;
+      expect(json['to'], equals('done'));
+    });
+
     test('verify command receives TKA environment variables', () async {
       // Create project with verify that checks env vars
       File('${verifyTmpDir.path}/projects/envcheck.yaml').writeAsStringSync('''

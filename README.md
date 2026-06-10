@@ -204,6 +204,18 @@ Verify commands receive these environment variables:
 | `TKA_TICKET_STATUS` | `red` | Current status (source) |
 | `TKA_TRANSITION_TO` | `green` | Target status |
 | `TKA_BASE_PATH` | `/path/to/.tka` | Resolved .tka directory |
+| `TKA_TICKET_TITLE` | `Fix login bug` | Ticket title |
+| `TKA_TICKET_FIELD_<NAME>` | `TKA_TICKET_FIELD_TEST_CMD` | One per non-null custom field (upper-cased, non-alphanumerics → `_`; lists JSON-encoded) |
+
+Field variables make per-ticket dynamic gates possible — a static workflow can verify
+something different for every ticket:
+
+```yaml
+# Each ticket carries its own acceptance test in a test_cmd field;
+# one verify line runs the right test for whichever ticket transitions.
+verify:
+  done: 'sh -c "$TKA_TICKET_FIELD_TEST_CMD"'
+```
 
 `TKA_BASE_PATH` is also used for `.tka` resolution: `--base` > `TKA_BASE_PATH` > `./.tka` > parent directory search. This means verify scripts that spawn sub-agents can pass the tka context through automatically.
 

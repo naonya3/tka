@@ -390,6 +390,11 @@ To edit an existing workflow, modify the YAML file at: \$(tka root)/projects/<na
         'TKA_TICKET_STATUS': 'Current status (transition source)',
         'TKA_TRANSITION_TO': 'Target status',
         'TKA_BASE_PATH': 'Resolved .tka directory path',
+        'TKA_TICKET_TITLE': 'Ticket title',
+        'TKA_TICKET_FIELD_<NAME>':
+            'One per non-null custom field, name upper-cased with non-alphanumerics as "_" '
+            '(e.g. field "test_cmd" → TKA_TICKET_FIELD_TEST_CMD). List fields are JSON-encoded. '
+            'Enables per-ticket dynamic gates like: sh -c "\$TKA_TICKET_FIELD_TEST_CMD"',
       },
     };
     _printer(jsonEncode(schema));

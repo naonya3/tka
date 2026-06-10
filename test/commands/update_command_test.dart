@@ -169,4 +169,30 @@ states:
               contains('Available'), contains('title')))),
     );
   });
+
+  group('status_log preservation', () {
+    test('update keeps the existing status_log', () async {
+      final withLog = Ticket(
+        project: 'test-project',
+        seq: 9,
+        title: 'logged',
+        status: 'todo',
+        fields: {'detail': null},
+        statusLog: [
+          {'from': 'a', 'to': 'todo', 'at': '2026-06-11T00:00:00'}
+        ],
+        createdAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        updatedAt: DateTime.parse('2026-04-01T10:00:00+09:00'),
+        createdAtRaw: '2026-04-01T10:00:00+09:00',
+        updatedAtRaw: '2026-04-01T10:00:00+09:00',
+      );
+      ticketStore.save(withLog);
+
+      await runner.run(['update', 'test-project-009', '--set', 'detail=changed']);
+
+      final loaded = ticketStore.load('test-project', 9);
+      expect(loaded.statusLog, hasLength(1));
+      expect(loaded.statusLog.single['to'], equals('todo'));
+    });
+  });
 }

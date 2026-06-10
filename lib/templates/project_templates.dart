@@ -20,30 +20,42 @@ states:
   'tdd': '''
 version: 2
 name: tdd
-description: Test-driven development cycle. Enforces the Red-Green-Refactor discipline.
+description: Test-driven development cycle. Machine-enforces the Red-Green-Refactor discipline — verify gates run the ticket's test_cmd, so progress cannot be self-reported.
 fields:
   detail:
     type: string
-    description: What feature or behavior to implement. The agent reads this on todo→red to decide what test to write.
+    description: What feature or behavior to implement. The agent reads this on the todo state to decide what test to write.
   test_cmd:
     type: string
-    description: Shell command that runs the test for this ticket (e.g. "dart test test/foo_test.dart"). Used during red/green to confirm fail/pass state.
+    description: Shell command that runs the test for this ticket (e.g. "dart test test/foo_test.dart"). The verify gates run it on every transition, so it must be set before leaving todo.
   history:
     type: list
     description: Append-only progress notes (e.g. "Wrote failing test", "Implementation passes locally").
 states:
   initial: todo
   guide:
-    todo: Read the ticket and identify what to implement. Transition to red to begin writing a failing test.
-    red: Write a failing test that defines the expected behavior. Do not write implementation code yet. Transition to green once the test is written and confirmed failing.
-    green: Write the minimum code to make the failing test pass. Do not add extra functionality. Transition to refactor once tests pass, or to done if the code is already clean.
-    refactor: Improve the code structure without changing behavior. All tests must still pass. Transition to done when satisfied, or back to green if new tests are needed.
-    done: Implementation complete. All tests pass and code is clean.
+    todo: 'Read detail, write a FAILING test for the behavior, and set test_cmd via tka update {{id}} --set test_cmd=... Then transition to red — the gate runs test_cmd and blocks unless it fails (no implementation yet).'
+    red: 'The failing test is confirmed. Write the minimum code to make it pass, then transition to green — the gate re-runs test_cmd and blocks while it fails.'
+    green: 'Test passes. Refactor if the code needs it (transition to refactor), otherwise transition to done — the gate re-runs test_cmd to catch regressions.'
+    refactor: 'Improve structure without changing behavior. Transition to done when satisfied — the gate re-runs test_cmd — or back to green if new tests are needed.'
+    done: Implementation complete. The test passed at every gate.
   transitions:
-    todo: [red]
-    red: [green, todo]
-    green: [refactor, done]
-    refactor: [done, green]
+    todo:
+      targets: [red]
+      verify:
+        red: '[ -n "\$TKA_TICKET_FIELD_TEST_CMD" ] || { echo "Set test_cmd before leaving todo." >&2; exit 1; }; if sh -c "\$TKA_TICKET_FIELD_TEST_CMD" >/dev/null 2>&1; then echo "test_cmd passes, but red requires a FAILING test. Write the test first." >&2; exit 1; fi'
+    red:
+      targets: [green, todo]
+      verify:
+        green: 'sh -c "\$TKA_TICKET_FIELD_TEST_CMD"'
+    green:
+      targets: [refactor, done]
+      verify:
+        done: 'sh -c "\$TKA_TICKET_FIELD_TEST_CMD"'
+    refactor:
+      targets: [done, green]
+      verify:
+        done: 'sh -c "\$TKA_TICKET_FIELD_TEST_CMD"'
 ''',
   'review-loop': '''
 version: 2

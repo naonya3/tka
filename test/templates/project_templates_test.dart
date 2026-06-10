@@ -50,4 +50,27 @@ void main() {
       }
     });
   });
+
+  group('tdd template gates', () {
+    ProjectDefinition tdd() =>
+        ProjectDefinition.fromYaml(loadYaml(projectTemplates['tdd']!) as Map);
+
+    test('every forward transition is gated on test_cmd', () {
+      final sm = tdd().stateMachine;
+      expect(sm.getVerify('todo', 'red'), contains('TKA_TICKET_FIELD_TEST_CMD'));
+      expect(sm.getVerify('red', 'green'), contains('TKA_TICKET_FIELD_TEST_CMD'));
+      expect(sm.getVerify('green', 'done'), contains('TKA_TICKET_FIELD_TEST_CMD'));
+      expect(sm.getVerify('refactor', 'done'),
+          contains('TKA_TICKET_FIELD_TEST_CMD'));
+    });
+
+    test('todo gate demands a failing test, red gate a passing one', () {
+      final sm = tdd().stateMachine;
+      // todo→red refuses a passing test_cmd (no real failing test written)
+      expect(sm.getVerify('todo', 'red'), contains('FAILING'));
+      // backward transitions stay ungated
+      expect(sm.getVerify('red', 'todo'), isNull);
+      expect(sm.getVerify('green', 'refactor'), isNull);
+    });
+  });
 }

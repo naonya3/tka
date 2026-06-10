@@ -91,6 +91,7 @@ For long or multiline text, use pipe or file instead of inline value:
       title: ticket.title,
       status: ticket.status,
       fields: newFields,
+      statusLog: ticket.statusLog,
       createdAt: ticket.createdAt,
       updatedAt: now,
       createdAtRaw: oldJson['created_at'] as String,

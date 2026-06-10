@@ -125,18 +125,24 @@ class TicketStore {
     tmpFile.renameSync(filePath);
   }
 
+  /// Error for a missing active ticket; tells archived apart from gone.
+  Exception _notFoundInActive(String project, int seq) {
+    final fileName = '${seq.toString().padLeft(3, '0')}.json';
+    final id = '$project-${seq.toString().padLeft(3, '0')}';
+    final archivedFile =
+        File(p.join(_projectDir(project), 'archived', fileName));
+    if (archivedFile.existsSync()) {
+      return Exception(
+          'Ticket not found in active: $id. Use --archived to inspect archived tickets.');
+    }
+    return Exception('Ticket not found: $id');
+  }
+
   Ticket load(String project, int seq) {
     final fileName = '${seq.toString().padLeft(3, '0')}.json';
     final file = File(p.join(_projectDir(project), fileName));
     if (!file.existsSync()) {
-      final id = '$project-${seq.toString().padLeft(3, '0')}';
-      final archivedFile =
-          File(p.join(_projectDir(project), 'archived', fileName));
-      if (archivedFile.existsSync()) {
-        throw Exception(
-            'Ticket not found in active: $id. Use --archived to inspect archived tickets.');
-      }
-      throw Exception('Ticket not found: $id');
+      throw _notFoundInActive(project, seq);
     }
     return _parseTicketFile(file);
   }
@@ -182,17 +188,9 @@ class TicketStore {
 
   void archive(String project, int seq) {
     final fileName = '${seq.toString().padLeft(3, '0')}.json';
-    final id = '$project-${seq.toString().padLeft(3, '0')}';
     final src = File(p.join(_projectDir(project), fileName));
     if (!src.existsSync()) {
-      final archivedFile =
-          File(p.join(_projectDir(project), 'archived', fileName));
-      if (archivedFile.existsSync()) {
-        throw Exception(
-            'Ticket not found in active: $id. It is already archived; '
-            'use --archived with "tka show" to inspect it.');
-      }
-      throw Exception('Ticket not found: $id');
+      throw _notFoundInActive(project, seq);
     }
     final archiveDir = Directory(p.join(_projectDir(project), 'archived'));
     if (!archiveDir.existsSync()) archiveDir.createSync();

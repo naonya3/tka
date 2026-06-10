@@ -193,8 +193,8 @@ void main() {
         () => store.archive('proj', 2),
         throwsA(predicate((e) =>
             e is Exception &&
-            e.toString().contains('not found in active') &&
-            e.toString().contains('already archived'))),
+            e.toString().contains('Ticket not found in active: proj-002') &&
+            e.toString().contains('Use --archived'))),
       );
       expect(
         () => store.archive('proj', 99),

@@ -366,7 +366,9 @@ To edit an existing workflow, modify the YAML file at: \$(tka root)/projects/<na
         },
       },
       'states_note':
-          'States that appear only as transition targets (not as keys) are terminal states.',
+          'States that appear only as transition targets (not as keys) are terminal states. '
+          '"initial" must be a key in "transitions" — an initial state with no outgoing '
+          'transitions would strand every new ticket, so such schemas are rejected.',
       'why_field_description_matters':
           'Field "description" is the agent\'s only hint about what value belongs in a field. '
           'Without it, the agent guesses from the field name. '

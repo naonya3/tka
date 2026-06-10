@@ -221,6 +221,59 @@ verify:
 
 `TKA_BASE_PATH` is also used for `.tka` resolution: `--base` > `TKA_BASE_PATH` > `./.tka` > parent directory search. This means verify scripts that spawn sub-agents can pass the tka context through automatically.
 
+## The Untrusted-Agent Pattern
+
+The composition everything above builds toward: **don't trust the agent's self-report — let gates check reality, and let the workflow itself deliver the instructions.**
+
+1. The **orchestrator** (you, or a coordinating agent) writes an *acceptance test* for each task and attaches it to the ticket in a `test_cmd` field.
+2. The **worker agent** is handed *only a ticket ID*. No task description in the prompt, no completion checklist — `tka show` returns the brief (`detail`), the current instructions (`guide`), and the legal moves (`available_transitions`).
+3. The `done` transition runs the ticket's own acceptance test via the `TKA_TICKET_FIELD_TEST_CMD` env var. If it fails, the transition is **blocked** — the worker cannot mark its own homework.
+
+```yaml
+# factory.yaml — a hand-off pipeline with machine-verified completion
+version: 2
+name: factory
+description: Orchestrator enqueues tasks with acceptance tests; workers claim and execute.
+fields:
+  detail:
+    type: string
+    required: true
+    description: Full handoff brief — what to build, where, and constraints.
+  agent:
+    type: string
+    description: Worker identifier. Set when claiming.
+  test_cmd:
+    type: string
+    description: Acceptance test command, set by the orchestrator. The done gate runs it.
+  result:
+    type: string
+    description: One-line summary of what was delivered.
+states:
+  initial: queued
+  guide:
+    queued: 'To claim this task: tka transition {{id}} --to running --set agent=<your-name>. Then re-run tka show {{id}} for the next guide.'
+    running: 'Build exactly what detail describes. When done, set result via tka update and transition to done — an acceptance gate verifies your work and blocks if it fails.'
+    done: Delivered and verified. Nothing to do.
+    failed: Append the blocker to history; the orchestrator will re-queue.
+  transitions:
+    queued: [running]
+    running:
+      targets: [done, failed]
+      verify:
+        done: 'sh -c "$TKA_TICKET_FIELD_TEST_CMD"'
+    failed: [queued]
+```
+
+The entire worker prompt is then three lines — everything else lives in the workflow:
+
+> You are worker-A. Run `tka show factory-001` in /path/to/repo.
+> Follow the ticket's guide for whatever state it is in.
+> Errors include an "output" field explaining what to fix.
+
+Because guides expand `{{id}}` at read time, every instruction the worker sees is copy-paste executable. Because completion is gated on the orchestrator's acceptance test, "done" *means* done. And because every transition lands in the auto-managed `status_log`, the orchestrator audits the run with `tka show <id> --field status_log` instead of trusting the worker's summary.
+
+The built-in `tdd` template ships the same pattern for Red-Green-Refactor: its gates demand a *failing* test to enter red and a *passing* one to leave it, so "I wrote a test first" stops being a claim and becomes a precondition.
+
 ## Example: tka-dev — How tka Develops Itself
 
 tka uses itself for its own development. The `tka-dev` project is a real workflow that automates git worktree setup, testing, AI code review, and GitHub releases — all through verify scripts.

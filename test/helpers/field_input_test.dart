@@ -179,4 +179,24 @@ void main() {
       expect(result['quantity'], equals(5));
     });
   });
+
+  group('extractTitleFromSetOptions', () {
+    test('accepts a title at the 500-char limit', () {
+      final long = 'a' * 500;
+      final (title, rest) = extractTitleFromSetOptions(['title=$long']);
+      expect(title, equals(long));
+      expect(rest, isEmpty);
+    });
+
+    test('rejects a title over 500 chars with a hint', () {
+      final long = 'a' * 501;
+      expect(
+        () => extractTitleFromSetOptions(['title=$long']),
+        throwsA(predicate((e) =>
+            e is FormatException &&
+            e.message.contains('500') &&
+            e.message.contains('detail'))),
+      );
+    });
+  });
 }

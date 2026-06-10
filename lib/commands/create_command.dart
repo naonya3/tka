@@ -17,6 +17,7 @@ class CreateCommand extends Command {
 Usage: tka create <project> --set field=value [--set field=value ...]
 Output: {"id": "...", "seq": N}
 
+title is capped at 500 chars; put long text in a string field such as "detail".
 For long or multiline text, use pipe or file instead of inline value:
   echo "long text..." | tka create proj --set title=Name --set detail=-
   tka create proj --set title=Name --set detail=@path/to/file.txt

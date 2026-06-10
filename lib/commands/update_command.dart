@@ -17,6 +17,7 @@ class UpdateCommand extends Command<void> {
 Usage: tka update <id> --set field=value [--set field=value ...]
 Output: {"id": "...", "updated_at": "..."}
 
+title is capped at 500 chars; put long text in a string field such as "detail".
 For long or multiline text, use pipe or file instead of inline value:
   echo "long text..." | tka update <id> --set detail=-
   tka update <id> --set detail=@path/to/file.txt''';

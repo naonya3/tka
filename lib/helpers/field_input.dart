@@ -72,6 +72,10 @@ Map<String, dynamic> buildFieldsFromSetOptions(
 /// Extracts the reserved "title" key from --set options.
 /// Returns (resolvedTitle, remainingOptions). If title is not present,
 /// resolvedTitle is null.
+/// Hard cap for ticket titles. Long prose belongs in a string field
+/// (e.g. "detail"); an unbounded title breaks list output and the watch TUI.
+const maxTitleLength = 500;
+
 (String?, List<String>) extractTitleFromSetOptions(List<String> setOptions) {
   String? title;
   final remaining = <String>[];
@@ -89,6 +93,11 @@ Map<String, dynamic> buildFieldsFromSetOptions(
     final resolved = resolveFieldValue(opt.substring(idx + 1));
     if (resolved == null || resolved.trim().isEmpty) {
       throw FormatException('title cannot be empty');
+    }
+    if (resolved.length > maxTitleLength) {
+      throw FormatException(
+          'title is too long (${resolved.length} chars, max $maxTitleLength). '
+          'Put long text in a string field such as "detail" instead.');
     }
     title = resolved;
   }

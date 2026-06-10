@@ -414,4 +414,47 @@ void main() {
       expect((warning['files'] as List).single, contains('002.json'));
     });
   });
+
+  group('cross-project list (no --project)', () {
+    setUp(() {
+      _writeProjectYaml('${tmpDir.path}/projects', 'alpha');
+      _writeProjectYaml('${tmpDir.path}/projects', 'beta');
+      ticketStore.save(_makeTicket('alpha', 1, 'todo'));
+      ticketStore.save(_makeTicket('alpha', 2, 'done'));
+      ticketStore.save(_makeTicket('beta', 1, 'todo'));
+    });
+
+    test('lists tickets from all projects with project in default fields',
+        () async {
+      await makeRunner().run(['list']);
+      final result = parseOutput();
+      expect(result, hasLength(3));
+      final ids = result.map((e) => '${e['project']}/${e['id']}').toSet();
+      expect(ids,
+          equals({'alpha/alpha-001', 'alpha/alpha-002', 'beta/beta-001'}));
+      expect(result.first.keys, contains('status'));
+    });
+
+    test('filters by status across projects', () async {
+      await makeRunner().run(['list', '--status', 'todo']);
+      final result = parseOutput();
+      expect(result.map((e) => e['id']).toSet(),
+          equals({'alpha-001', 'beta-001'}));
+    });
+
+    test('rejects custom sort keys across projects', () async {
+      expect(
+        () => makeRunner().run(['list', '--sort', 'detail']),
+        throwsA(predicate((e) =>
+            e is Exception && e.toString().contains('built-in keys'))),
+      );
+    });
+
+    test('sorts by built-in key across projects', () async {
+      await makeRunner().run(['list', '--sort', '-id', '--limit', '2']);
+      final result = parseOutput();
+      expect(result.map((e) => e['id']).toList(),
+          equals(['beta-001', 'alpha-002']));
+    });
+  });
 }

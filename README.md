@@ -72,6 +72,8 @@ tka list -p <project> --where priority=p0 # Filter by field value
 tka list -p <project> --fields id,status,title  # Select output fields
 tka list -p <project> --sort -created_at --limit 5
 tka list -p <project> --archived          # List archived tickets
+tka list                                  # All projects (fields: project,id,status)
+tka list --status todo                    # Filter across all projects
 tka show <id>                             # Full ticket JSON + guide? + available_transitions
 tka show <id> --field <name>              # Raw field value (any built-in or custom field; errors on unknown)
 tka show <id> --archived                  # Inspect an archived ticket (read-only)

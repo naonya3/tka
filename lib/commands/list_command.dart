@@ -12,10 +12,13 @@ class ListCommand extends Command<void> {
   @override
   final String description = '''List tickets in a project.
 
-Usage: tka list --project <name> [--status X] [--where field=value] [--sort key] [--limit N] [--offset N] [--fields f1,f2]
+Usage: tka list [--project <name>] [--status X] [--where field=value] [--sort key] [--limit N] [--offset N] [--fields f1,f2]
 Output: JSON array with selected fields (default: id, status).
 Built-in fields: id, seq, project, status, created_at, updated_at.
 Custom fields: as defined in the project YAML.
+Without --project, lists tickets across ALL projects (default fields:
+project, id, status). Cross-project --status/--where are matched as-is;
+--sort accepts built-in keys only.
 Corrupt ticket files are skipped; a warning JSON listing their paths goes to stderr.
 
 Examples:
@@ -24,7 +27,8 @@ Examples:
   tka list -p myproj --where priority=p0
   tka list -p myproj --sort -created_at --limit 5
   tka list -p myproj --fields id,status,due,priority
-  tka list -p myproj --archived''';
+  tka list -p myproj --archived
+  tka list --status todo            # todo tickets across all projects''';
 
   final ProjectStore projectStore;
   final TicketStore ticketStore;
@@ -39,7 +43,7 @@ Examples:
   })  : _out = out ?? stdout,
         _err = err ?? stderr {
     argParser
-      ..addOption('project', abbr: 'p', help: 'Project name (required)', mandatory: true)
+      ..addOption('project', abbr: 'p', help: 'Project name (omit to list across all projects)')
       ..addOption('status', abbr: 's', help: 'Filter by status')
       ..addMultiOption('where', abbr: 'w', splitCommas: false, help: 'Filter by field=value (AND)')
       ..addOption('sort', help: 'Sort key. Prefix with - for descending')
@@ -51,7 +55,7 @@ Examples:
 
   @override
   void run() {
-    final projectName = argResults!['project'] as String;
+    final projectName = argResults!['project'] as String?;
     final statusFilter = argResults!['status'] as String?;
     final whereFilters = argResults!['where'] as List<String>;
     final wherePairs = whereFilters
@@ -72,8 +76,12 @@ Examples:
       }
     }
 
-    final projectDef = projectStore.load(projectName);
-    final customFields = projectDef.fields.keys.toSet();
+    final projectNames =
+        projectName != null ? [projectName] : projectStore.list();
+    final customFields = <String>{};
+    for (final name in projectNames) {
+      customFields.addAll(projectStore.load(name).fields.keys);
+    }
 
     for (final (field, _) in wherePairs) {
       if (field == 'title') continue;
@@ -88,6 +96,10 @@ Examples:
     if (sortKey != null) {
       final rawKey = sortKey.startsWith('-') ? sortKey.substring(1) : sortKey;
       const builtInSortFields = {'id', 'seq', 'status', 'title', 'created_at', 'updated_at'};
+      if (projectName == null && !builtInSortFields.contains(rawKey)) {
+        throw Exception(
+            'Cross-project list can only sort by built-in keys: ${(builtInSortFields.toList()..sort()).join(', ')}');
+      }
       if (!builtInSortFields.contains(rawKey) && !customFields.contains(rawKey)) {
         final available = [...builtInSortFields, ...customFields]..sort();
         throw Exception(
@@ -112,9 +124,8 @@ Examples:
       }
     }
 
-    final sm = projectDef.stateMachine;
-
-    if (statusFilter != null) {
+    if (statusFilter != null && projectName != null) {
+      final sm = projectStore.load(projectName).stateMachine;
       final allStatuses = <String>{sm.initial};
       for (final e in sm.transitions.entries) {
         allStatuses.add(e.key);
@@ -128,9 +139,12 @@ Examples:
 
     final archived = argResults!['archived'] as bool;
     final corruptFiles = <String>[];
-    var allTickets = archived
-        ? ticketStore.listArchived(projectName, corruptFiles: corruptFiles)
-        : ticketStore.listAll(projectName, corruptFiles: corruptFiles);
+    var allTickets = [
+      for (final name in projectNames)
+        ...archived
+            ? ticketStore.listArchived(name, corruptFiles: corruptFiles)
+            : ticketStore.listAll(name, corruptFiles: corruptFiles)
+    ];
     if (corruptFiles.isNotEmpty) {
       _err.writeln(jsonEncode({
         'warning': 'Skipped corrupt ticket files',
@@ -191,7 +205,9 @@ Examples:
     final fieldsOption = argResults!['fields'] as String?;
     final outputFields = fieldsOption != null
         ? fieldsOption.split(',').map((f) => f.trim()).where((f) => f.isNotEmpty).toList()
-        : ['id', 'status'];
+        : (projectName == null
+            ? ['project', 'id', 'status']
+            : ['id', 'status']);
     if (outputFields.isEmpty) {
       throw Exception('--fields must specify at least one field name');
     }

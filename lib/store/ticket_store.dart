@@ -19,16 +19,21 @@ class TicketStore {
   String _projectDir(String project) => p.join(basePath, project);
 
   int nextSeq(String project) {
-    final dir = Directory(_projectDir(project));
-    if (!dir.existsSync()) return 1;
-    final files = dir
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.json'));
-    if (files.isEmpty) return 1;
-    final maxSeq = files
-        .map((f) => int.tryParse(p.basenameWithoutExtension(f.path)) ?? 0)
-        .reduce((a, b) => a > b ? a : b);
+    // Scan archived tickets too: an archived seq must never be reissued,
+    // or a later archive would silently overwrite the old ticket.
+    final dirs = [
+      Directory(_projectDir(project)),
+      Directory(p.join(_projectDir(project), 'archived')),
+    ];
+    var maxSeq = 0;
+    for (final dir in dirs) {
+      if (!dir.existsSync()) continue;
+      for (final f in dir.listSync().whereType<File>()) {
+        if (!f.path.endsWith('.json')) continue;
+        final seq = int.tryParse(p.basenameWithoutExtension(f.path)) ?? 0;
+        if (seq > maxSeq) maxSeq = seq;
+      }
+    }
     return maxSeq + 1;
   }
 
@@ -170,6 +175,12 @@ class TicketStore {
     }
     final archiveDir = Directory(p.join(_projectDir(project), 'archived'));
     if (!archiveDir.existsSync()) archiveDir.createSync();
-    src.renameSync(p.join(archiveDir.path, fileName));
+    final dest = File(p.join(archiveDir.path, fileName));
+    if (dest.existsSync()) {
+      // Safety net: must never silently destroy an archived ticket.
+      throw Exception(
+          'Archived ticket already exists: $project-${seq.toString().padLeft(3, '0')}. Refusing to overwrite it.');
+    }
+    src.renameSync(dest.path);
   }
 }

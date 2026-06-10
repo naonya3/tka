@@ -50,6 +50,20 @@ void main() {
 
       expect(store.nextSeq('myproject'), equals(4));
     });
+
+    test('counts archived tickets so archived ids are never reused', () {
+      final dir = Directory('${tmpDir.path}/myproject');
+      final archivedDir = Directory('${dir.path}/archived');
+      archivedDir.createSync(recursive: true);
+      final t1 = _makeTicket('myproject', 1, 'todo');
+      final t6 = _makeTicket('myproject', 6, 'done');
+      File('${dir.path}/001.json')
+          .writeAsStringSync(jsonEncode(t1.toJson()));
+      File('${archivedDir.path}/006.json')
+          .writeAsStringSync(jsonEncode(t6.toJson()));
+
+      expect(store.nextSeq('myproject'), equals(7));
+    });
   });
 
   group('save', () {
@@ -155,6 +169,42 @@ void main() {
             expectedUpdatedAt: '2026-04-02T10:00:00+09:00'),
         returnsNormally,
       );
+    });
+  });
+
+  group('archive', () {
+    test('moves ticket file into archived directory', () {
+      final ticket = _makeTicket('proj', 2, 'done');
+      store.save(ticket);
+
+      store.archive('proj', 2);
+
+      expect(File('${tmpDir.path}/proj/002.json').existsSync(), isFalse);
+      expect(
+          File('${tmpDir.path}/proj/archived/002.json').existsSync(), isTrue);
+    });
+
+    test('refuses to overwrite an existing archived ticket', () {
+      final dir = Directory('${tmpDir.path}/proj');
+      final archivedDir = Directory('${dir.path}/archived');
+      archivedDir.createSync(recursive: true);
+      final old = _makeTicket('proj', 2, 'done');
+      File('${archivedDir.path}/002.json')
+          .writeAsStringSync(jsonEncode(old.toJson()));
+      final active = _makeTicket('proj', 2, 'todo');
+      store.save(active);
+
+      expect(
+        () => store.archive('proj', 2),
+        throwsA(predicate((e) =>
+            e is Exception && e.toString().contains('already exists'))),
+      );
+      // Neither side is lost.
+      expect(File('${dir.path}/002.json').existsSync(), isTrue);
+      final archived = jsonDecode(
+              File('${archivedDir.path}/002.json').readAsStringSync())
+          as Map<String, dynamic>;
+      expect(archived['status'], equals('done'));
     });
   });
 }
